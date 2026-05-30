@@ -131,6 +131,8 @@ function showToast(msg, type = "") {
 function getNombreUsuario() {
   return document.getElementById("user-nombre")?.textContent || "";
 }
+
+function pct(part, total) {
   if (!total) return "—";
   return Math.round((part / total) * 100) + "% del total";
 }
