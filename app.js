@@ -479,29 +479,83 @@ function renderCart() {
   }
 
   empty.style.display = "none";
-  el.innerHTML = keys.map(k => {
+  el.innerHTML = "";
+
+  keys.forEach(k => {
     const { product: p, qty } = cart[k];
     const pv  = getPrecioVenta(p);
     const sub = pv * qty;
-    return `<div class="cart-item">
-      <div class="cart-item-info">
-        <div class="cart-item-name" title="${p.desc}">${p.desc}</div>
-        <div class="cart-item-detail"><span class="badge ${badgeClass(p.proveedor)}" style="font-size:9px">${p.proveedor}</span></div>
-      </div>
-      <div class="cart-item-right">
-        <span class="cart-item-price">${fmtDec(sub)}</span>
-        <div class="qty-wrap">
-          <button class="qty-btn" data-action="minus" data-key="${k}">-</button>
-          <span class="qty-val">${qty}</span>
-          <button class="qty-btn" data-action="plus" data-key="${k}">+</button>
-        </div>
-      </div>
-      <button class="cart-del" data-action="remove" data-key="${k}">×</button>
-    </div>`;
-  }).join("");
+
+    const item = document.createElement("div");
+    item.className = "cart-item";
+
+    const info = document.createElement("div");
+    info.className = "cart-item-info";
+
+    const nombre = document.createElement("div");
+    nombre.className = "cart-item-name";
+    nombre.title = p.desc || "";
+    nombre.textContent = p.desc || "";
+
+    const detalle = document.createElement("div");
+    detalle.className = "cart-item-detail";
+    const badge = document.createElement("span");
+    badge.className = "badge " + badgeClass(p.proveedor);
+    badge.style.fontSize = "9px";
+    badge.textContent = p.proveedor || "";
+    detalle.appendChild(badge);
+
+    info.appendChild(nombre);
+    info.appendChild(detalle);
+
+    const right = document.createElement("div");
+    right.className = "cart-item-right";
+
+    const precio = document.createElement("span");
+    precio.className = "cart-item-price";
+    precio.textContent = fmtDec(sub);
+
+    const qtyWrap = document.createElement("div");
+    qtyWrap.className = "qty-wrap";
+
+    const btnMinus = document.createElement("button");
+    btnMinus.className = "qty-btn";
+    btnMinus.textContent = "-";
+    btnMinus.dataset.action = "minus";
+    btnMinus.dataset.key = k;
+
+    const qtyVal = document.createElement("span");
+    qtyVal.className = "qty-val";
+    qtyVal.textContent = qty;
+
+    const btnPlus = document.createElement("button");
+    btnPlus.className = "qty-btn";
+    btnPlus.textContent = "+";
+    btnPlus.dataset.action = "plus";
+    btnPlus.dataset.key = k;
+
+    qtyWrap.appendChild(btnMinus);
+    qtyWrap.appendChild(qtyVal);
+    qtyWrap.appendChild(btnPlus);
+
+    right.appendChild(precio);
+    right.appendChild(qtyWrap);
+
+    const btnDel = document.createElement("button");
+    btnDel.className = "cart-del";
+    btnDel.textContent = "×";
+    btnDel.dataset.action = "remove";
+    btnDel.dataset.key = k;
+
+    item.appendChild(info);
+    item.appendChild(right);
+    item.appendChild(btnDel);
+
+    el.appendChild(item);
+  });
 }
 
-// Delegación de eventos en el contenedor del carrito — se registra una sola vez
+// Delegación de eventos en el contenedor — se registra una sola vez
 document.getElementById("cartItems").addEventListener("click", e => {
   const btn = e.target.closest("[data-action]");
   if (!btn) return;
