@@ -465,20 +465,24 @@ function renderCart() {
   const keys  = Object.keys(cart);
   const total = keys.reduce((s, k) => s + getPrecioVenta(cart[k].product) * cart[k].qty, 0);
 
-  document.getElementById("cartCount").textContent = keys.length + (keys.length === 1 ? " ítem" : " ítems");
-  document.getElementById("cartTotal").textContent = fmtDec(total);
-  document.getElementById("btnConfirmarVenta").disabled = keys.length === 0;
-
+  const cartCount = document.getElementById("cartCount");
+  const cartTotal = document.getElementById("cartTotal");
+  const btnConfirmar = document.getElementById("btnConfirmarVenta");
   const el    = document.getElementById("cartItems");
   const empty = document.getElementById("cartEmpty");
 
+  if (cartCount)   cartCount.textContent = keys.length + (keys.length === 1 ? " ítem" : " ítems");
+  if (cartTotal)   cartTotal.textContent = fmtDec(total);
+  if (btnConfirmar) btnConfirmar.disabled = keys.length === 0;
+  if (!el) return;
+
   if (!keys.length) {
-    empty.style.display = "block";
+    if (empty) empty.style.display = "block";
     el.innerHTML = "";
     return;
   }
 
-  empty.style.display = "none";
+  if (empty) empty.style.display = "none";
   el.innerHTML = "";
 
   keys.forEach(k => {
