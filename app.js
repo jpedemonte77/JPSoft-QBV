@@ -447,14 +447,28 @@ function setScanState(state) {
 }
 
 document.addEventListener("keydown", e => {
-  const now = Date.now();
+  const now   = Date.now();
   const input = document.getElementById("searchInput");
   if (!input) return;
+
+  // Si el foco está en otro input/textarea/select → no interferir
+  const tag = document.activeElement?.tagName?.toLowerCase();
+  const isOtherInput = (tag === "input" || tag === "textarea" || tag === "select") && document.activeElement !== input;
+  if (isOtherInput) return;
+
+  // Si el foco está en el buscador
   if (document.activeElement === input) {
     if (e.key === "Enter") { e.preventDefault(); applyFilters(); }
+    if (e.key === "Escape") { input.value = ""; applyFilters(); input.blur(); }
     return;
   }
+
+  // Solo actuar si la vista venta está activa
+  const viewVenta = document.getElementById("view-venta");
+  if (!viewVenta?.classList.contains("active")) return;
+
   const gap = now - lastKeyTime; lastKeyTime = now;
+
   if (e.key === "Enter") {
     if (scanBuffer.length >= 4) {
       input.value = scanBuffer;
@@ -464,11 +478,28 @@ document.addEventListener("keydown", e => {
     }
     scanBuffer = ""; return;
   }
-  if (e.key.length === 1) {
-    if (gap > SCAN_SPEED * 3 && scanBuffer.length > 0) { scanBuffer = ""; setScanState("normal"); }
-    if (scanBuffer.length === 0) setScanState("scanning");
-    scanBuffer += e.key;
-  } else { scanBuffer = ""; }
+
+  if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    // Tecleo rápido (scanner) vs lento (humano)
+    const esScan = gap < SCAN_SPEED;
+    if (esScan) {
+      if (gap > SCAN_SPEED * 3 && scanBuffer.length > 0) { scanBuffer = ""; setScanState("normal"); }
+      if (scanBuffer.length === 0) setScanState("scanning");
+      scanBuffer += e.key;
+    } else {
+      // Búsqueda rápida — enfocar el input y dejar que el caracter se escriba
+      scanBuffer = "";
+      setScanState("normal");
+      input.focus();
+      // No prevenir el default — el caracter se escribe solo en el input enfocado
+    }
+  } else if (e.key === "Escape") {
+    input.value = "";
+    applyFilters();
+    scanBuffer = "";
+  } else {
+    scanBuffer = "";
+  }
 });
 
 document.getElementById("searchInput").addEventListener("input", applyFilters);
@@ -899,10 +930,9 @@ function renderCaja() {
   wrap.innerHTML = "";
 
   const ambosNoAbiertos = !manana?.apertura && !tarde?.apertura;
-  const soloUnoCerrado  = (manana?.apertura && !tarde?.apertura);
 
-  if (ambosNoAbiertos || soloUnoCerrado) {
-    // Mostrar lado a lado cuando hay formularios de apertura
+  if (ambosNoAbiertos) {
+    // Ambos sin abrir — lado a lado
     const row = document.createElement("div");
     row.style.cssText = "display:flex;gap:14px;padding:1.25rem;background:var(--surface2)";
     ["manana", "tarde"].forEach(turnoKey => {
@@ -911,7 +941,7 @@ function renderCaja() {
     });
     wrap.appendChild(row);
   } else {
-    // Turnos con datos — uno debajo del otro
+    // Al menos uno tiene datos — uno debajo del otro
     ["manana", "tarde"].forEach(turnoKey => {
       const turno = turnoKey === "manana" ? manana : tarde;
       wrap.appendChild(renderTurnoCard(turnoKey, turno, esHoy, manana, tarde));
@@ -955,7 +985,7 @@ function renderTurnoCard(turnoKey, turno, esHoy, manana, tarde) {
 
   if (!yaAbierto && esHoy && puedeAbrir) {
     // Formulario apertura — disponible
-    card.style.cssText = "background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:1.25rem;flex:1";
+    card.style.cssText = "background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius);padding:1.25rem;margin-bottom:14px;max-width:420px";
     card.innerHTML = `
       <div style="font-size:15px;font-weight:600;margin-bottom:4px">Turno ${label}</div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.5">Ingresá el fondo inicial para abrir el turno.</div>
@@ -979,7 +1009,7 @@ function renderTurnoCard(turnoKey, turno, esHoy, manana, tarde) {
 
   if (!yaAbierto) {
     // Turno no abierto y no se puede abrir aún — atenuado
-    card.style.cssText = "background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;flex:1;opacity:0.45";
+    card.style.cssText = "background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:1.25rem;flex:1;opacity:0.45;max-width:420px";
     card.innerHTML = `
       <div style="font-size:15px;font-weight:600;margin-bottom:4px">Turno ${label}</div>
       <div style="font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.5">Disponible una vez cerrado el Turno Mañana.</div>
