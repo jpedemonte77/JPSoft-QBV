@@ -5,8 +5,7 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-  getDatabase, ref, set, push, onValue, remove, update, get,
-  enableIndexedDbPersistence
+  getDatabase, ref, set, push, onValue, remove, update, get
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 import {
   getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged
@@ -29,14 +28,7 @@ const app  = initializeApp(firebaseConfig);
 const db   = getDatabase(app);
 const auth = getAuth(app);
 
-// Modo offline — sincroniza automáticamente cuando vuelve internet
-enableIndexedDbPersistence(db).catch(err => {
-  if (err.code === "failed-precondition") {
-    console.warn("Offline: múltiples pestañas abiertas, solo una puede usar el modo offline.");
-  } else if (err.code === "unimplemented") {
-    console.warn("Offline: este navegador no soporta persistencia offline.");
-  }
-});
+
 
 // ============================================================
 //  ESTADO GLOBAL
