@@ -31,24 +31,28 @@ const auth = getAuth(app);
 
 
 // ============================================================
-//  AVISO OFFLINE
+//  AVISO OFFLINE — usando Firebase .info/connected
 // ============================================================
-function updateOnlineStatus() {
+let estaOnline = true;
+
+function setOnlineStatus(online) {
+  estaOnline = online;
   const banner = document.getElementById("offlineBanner");
+  const wrap   = document.getElementById("app-wrapper");
   if (!banner) return;
-  if (navigator.onLine) {
+  if (online) {
     banner.style.display = "none";
-    document.getElementById("app-wrapper")?.style.removeProperty("margin-top");
+    if (wrap) wrap.style.marginTop = "";
   } else {
     banner.style.display = "block";
-    if (document.getElementById("app-wrapper"))
-      document.getElementById("app-wrapper").style.marginTop = "36px";
+    if (wrap) wrap.style.marginTop = "36px";
   }
 }
 
-window.addEventListener("online",  updateOnlineStatus);
-window.addEventListener("offline", updateOnlineStatus);
-updateOnlineStatus();
+// Firebase detecta la conexión real al servidor
+onValue(ref(db, ".info/connected"), snap => {
+  setOnlineStatus(snap.val() === true);
+});
 
 // ============================================================
 //  ESTADO GLOBAL
@@ -714,6 +718,11 @@ document.querySelectorAll(".pago-chip").forEach(btn => {
 document.getElementById("btnConfirmarVenta").addEventListener("click", () => {
   const keys = Object.keys(cart);
   if (!keys.length) return;
+
+  if (!estaOnline) {
+    showToast("Sin conexión — no se puede registrar la venta.", "error");
+    return;
+  }
 
   const cajaHoy = cajaData[todayKey()] || {};
   const turnoAbierto = (cajaHoy.manana?.apertura && !cajaHoy.manana?.cierre) ? "manana"
