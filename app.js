@@ -1131,10 +1131,12 @@ function renderTurnoCard(turnoKey, turno, esHoy, manana, tarde) {
     setTimeout(() => {
       document.getElementById(`btnAbrir_${turnoKey}`)?.addEventListener("click", async () => {
         const fondo = parseFloat(document.getElementById(`fondoInput_${turnoKey}`).value) || 0;
-        await setDoc(doc(db, 'caja', cajaFechaKey), {
+        // Cerrar form inmediatamente
+        showToast(`Turno ${label} abierto ✓`, "success");
+        // Escribir en Firestore en segundo plano
+        setDoc(doc(db, 'caja', cajaFechaKey), {
           [turnoKey]: { apertura: { hora: nowHora(), fondo, turno: label, admin: getNombreUsuario() } }
         }, { merge: true });
-        showToast(`Turno ${label} abierto ✓`, "success");
       });
     }, 0);
     return card;
@@ -1161,10 +1163,10 @@ function renderTurnoCard(turnoKey, turno, esHoy, manana, tarde) {
     btnReabrir.textContent = "Reabrir";
     btnReabrir.addEventListener("click", async () => {
       if (!confirm(`¿Reabrir el Turno ${label}?\nSe eliminará el cierre registrado.`)) return;
-      await updateDoc(doc(db, 'caja', cajaFechaKey), {
+      showToast(`Turno ${label} reabierto ✓`, "success");
+      updateDoc(doc(db, 'caja', cajaFechaKey), {
         [`${turnoKey}.cierre`]: deleteField()
       });
-      showToast(`Turno ${label} reabierto ✓`, "success");
     });
     btns.appendChild(btnReabrir);
   } else if (esHoy) {
@@ -1307,14 +1309,19 @@ document.getElementById("btnCajaSiguiente").addEventListener("click", () => {
 document.getElementById("closeModalCierre").addEventListener("click", () => document.getElementById("modalCierreCaja").classList.add("hidden"));
 document.getElementById("btnCancelarCierre").addEventListener("click", () => document.getElementById("modalCierreCaja").classList.add("hidden"));
 
-document.getElementById("btnConfirmarCierre").addEventListener("click", async () => {
+document.getElementById("btnConfirmarCierre").addEventListener("click", () => {
   if (!cierreTurnoActivo) return;
-  await setDoc(doc(db, 'caja', cajaFechaKey), {
-    [cierreTurnoActivo]: { cierre: { hora: nowHora(), admin: getNombreUsuario() } }
-  }, { merge: true });
+  const turno = cierreTurnoActivo;
+
+  // Cerrar modal inmediatamente
   document.getElementById("modalCierreCaja").classList.add("hidden");
-  showToast(`Turno ${TURNO_LABEL[cierreTurnoActivo]} cerrado ✓`);
+  showToast(`Turno ${TURNO_LABEL[turno]} cerrado ✓`);
   cierreTurnoActivo = null;
+
+  // Escribir en Firestore en segundo plano
+  setDoc(doc(db, 'caja', cajaFechaKey), {
+    [turno]: { cierre: { hora: nowHora(), admin: getNombreUsuario() } }
+  }, { merge: true });
 });
 
 // Imprimir cierre
@@ -1600,10 +1607,10 @@ document.getElementById("btnGuardarProducto").addEventListener("click", async ()
       };
       data.historialPrecios = histActual;
     }
-    await setDoc(doc(db, 'productos', prodEditId), data, { merge: true });
+    setDoc(doc(db, 'productos', prodEditId), data, { merge: true });
     showToast("Producto actualizado ✓", "success");
   } else {
-    await addDoc(collection(db, 'productos'), data);
+    addDoc(collection(db, 'productos'), data);
     showToast("Producto agregado ✓", "success");
   }
   cerrarModalProducto();
@@ -1612,9 +1619,9 @@ document.getElementById("btnGuardarProducto").addEventListener("click", async ()
 document.getElementById("btnEliminarProducto").addEventListener("click", async () => {
   if (!prodEditId) return;
   if (!confirm("¿Eliminar este producto?")) return;
-  await deleteDoc(doc(db, 'productos', prodEditId));
-  showToast("Producto eliminado");
   cerrarModalProducto();
+  showToast("Producto eliminado");
+  deleteDoc(doc(db, 'productos', prodEditId));
 });
 
 // ============================================================
@@ -1680,13 +1687,11 @@ document.getElementById("btnConfirmarImport").addEventListener("click", async ()
     for (const pNombre of parsedImport.proveedoresNombres) {
       if (!existentes.includes(pNombre)) {
         const gan = parsedImport.gananciaMap[pNombre];
-        await addDoc(collection(db, 'proveedores'), { nombre: pNombre, ganancia: gan != null ? Math.round(gan * 100) : 20, tabaco: false, categoria: "" });
+        addDoc(collection(db, 'proveedores'), { nombre: pNombre, ganancia: gan != null ? Math.round(gan * 100) : 20, tabaco: false, categoria: "" });
       }
     }
     // Guardar productos
-    for (const p of parsedImport.allProds) {
-      await addDoc(collection(db, 'productos'), p);
-    }
+    parsedImport.allProds.forEach(p => addDoc(collection(db, 'productos'), p));
     showToast(`${parsedImport.allProds.length} productos importados ✓`, "success");
     document.getElementById("closeModalImport").click();
   } catch(err) {
@@ -1782,7 +1787,7 @@ async function guardarMargen(tipo) {
   const ids = { general: "cfg-margen-general", tabaco: "cfg-margen-tabaco", cigarrillos: "cfg-margen-cigarrillos" };
   const val = parseFloat(document.getElementById(ids[tipo]).value);
   if (isNaN(val) || val < 0) { showToast("Ingresá un valor válido.", "error"); return; }
-  await setDoc(doc(db, 'config', 'margenes'), { [tipo]: val }, { merge: true });
+  setDoc(doc(db, 'config', 'margenes'), { [tipo]: val }, { merge: true });
   showToast(`Margen de ${TIPO_LABEL[tipo]} actualizado: ${val}% ✓`, "success");
 }
 
@@ -1884,16 +1889,16 @@ document.getElementById("btnGuardarProveedor").addEventListener("click", async (
   };
 
   if (provEditId) {
-    await setDoc(doc(db, 'proveedores', provEditId), data, { merge: true });
+    setDoc(doc(db, 'proveedores', provEditId), data, { merge: true });
     const ant = proveedores[provEditId]?.nombre;
     if (ant && ant !== nombre) {
-      for (const p of allProducts.filter(x => x.proveedor === ant)) {
-        await updateDoc(doc(db, 'productos', p._id), { proveedor: nombre });
-      }
+      allProducts.filter(x => x.proveedor === ant).forEach(p => {
+        updateDoc(doc(db, 'productos', p._id), { proveedor: nombre });
+      });
     }
     showToast("Proveedor actualizado ✓", "success");
   } else {
-    await addDoc(collection(db, 'proveedores'), data);
+    addDoc(collection(db, 'proveedores'), data);
     showToast("Proveedor creado ✓", "success");
   }
   cerrarModalProveedor();
@@ -1905,7 +1910,7 @@ document.getElementById("btnEliminarProveedor").addEventListener("click", async 
   const cant = allProducts.filter(x => x.proveedor === p?.nombre).length;
   if (cant > 0) { showToast(`No podés eliminar: tiene ${cant} productos asociados.`, "error"); return; }
   if (!confirm(`¿Eliminar el proveedor "${p?.nombre}"?`)) return;
-  await deleteDoc(doc(db, 'proveedores', provEditId));
+  deleteDoc(doc(db, 'proveedores', provEditId));
   showToast("Proveedor eliminado");
   cerrarModalProveedor();
 });
