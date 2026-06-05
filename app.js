@@ -1429,8 +1429,6 @@ function updateCajaSidebar() {
   const tmTot = calcTotalesTurno(hoy.manana);
   const ttTot = calcTotalesTurno(hoy.tarde);
   const total = tmTot.tot + ttTot.tot;
-  const totC  = (tmTot.totC || 0) + (ttTot.totC || 0);
-
   document.getElementById("caja-sidebar-total").textContent = fmt(total);
   const state = document.getElementById("caja-sidebar-state");
 
@@ -2088,4 +2086,3 @@ document.getElementById("btnEliminarProveedor").addEventListener("click", async 
 });
 
 // Cerrar modales con Escape
-
