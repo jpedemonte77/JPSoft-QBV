@@ -614,6 +614,14 @@ document.addEventListener("keydown", e => {
   const modalProvOpen   = !document.getElementById("modalProveedor")?.classList.contains("hidden");
   const modalCierreOpen = !document.getElementById("modalCierreCaja")?.classList.contains("hidden");
 
+  // ── Ctrl+Enter — abrir cobrar desde cualquier lugar en vista venta ──
+  if (e.key === "Enter" && e.ctrlKey && viewVenta) {
+    e.preventDefault();
+    const btnCobrar = document.getElementById("btnConfirmarVenta");
+    if (btnCobrar && Object.keys(cart).length > 0) btnCobrar.click();
+    return;
+  }
+
   // ── ESCAPE — cerrar modales ──
   if (e.key === "Escape") {
     ["modalVenta","modalProducto","modalProveedor","modalImport","modalCierreCaja"].forEach(id => {
@@ -715,13 +723,7 @@ document.addEventListener("keydown", e => {
       return;
     }
 
-    // Ctrl+Enter — abrir panel de cobrar desde cualquier lugar
-    if (e.key === "Enter" && e.ctrlKey) {
-      e.preventDefault();
-      const btnCobrar = document.getElementById("btnConfirmarVenta");
-      if (btnCobrar && Object.keys(cart).length > 0) btnCobrar.click();
-      return;
-    }
+
 
     if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
       const esScan = gap < SCAN_SPEED;
