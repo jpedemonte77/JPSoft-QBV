@@ -707,6 +707,14 @@ document.addEventListener("keydown", e => {
       scanBuffer = ""; return;
     }
 
+    // Tecla C — abrir panel de cobrar
+    if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey && !e.altKey && document.activeElement !== input) {
+      e.preventDefault();
+      const btnCobrar = document.getElementById("btnConfirmarVenta");
+      if (btnCobrar && Object.keys(cart).length > 0) btnCobrar.click();
+      return;
+    }
+
     if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
       const esScan = gap < SCAN_SPEED;
       if (esScan) {
@@ -827,19 +835,10 @@ function removeFromCartByFila() {
 window._changeQty = function(key, delta) {
   if (!cart[key]) return;
   const newQty = cart[key].qty + delta;
-  if (newQty <= 0) {
-    delete cart[key];
-    renderModalVenta();
-    renderProductosVenta();
-    renderCart();
-    if (!Object.keys(cart).length) {
-      document.getElementById("modalVenta").classList.add("hidden");
-      showToast("Venta cancelada — carrito vacío");
-    }
-  } else {
-    cart[key].qty = newQty;
-    renderCart();
-  }
+  if (newQty < 0) return; // no bajar de 0
+  cart[key].qty = newQty;
+  renderModalVenta();
+  renderCart();
 };
 
 function calcDescuento(subtotal) {
@@ -1148,7 +1147,19 @@ document.getElementById("btnConfirmarVentaFinal").addEventListener("click", conf
 async function confirmarVentaFinal() {
   const pendiente = window._ventaPendiente;
   if (!pendiente?.keys) return;
-  const { keys, total, hora, subtotal: vSubtotal, descMonto: vDesc } = pendiente;
+
+  // Ignorar ítems con qty 0
+  const keysValidas = pendiente.keys.filter(k => cart[k]?.qty > 0);
+  if (!keysValidas.length) {
+    document.getElementById("modalVenta").classList.add("hidden");
+    showToast("No hay ítems para confirmar");
+    return;
+  }
+
+  const { hora, subtotal: vSubtotal, descMonto: vDesc } = pendiente;
+  // Recalcular total con solo ítems válidos
+  const total = keysValidas.reduce((s, k) => s + getPrecioVenta(cart[k].product) * cart[k].qty, 0) - (vDesc || 0);
+  const keys = keysValidas;
 
   // 1. Capturar todos los datos ANTES de limpiar el carrito
   const items = keys.map(k => {
