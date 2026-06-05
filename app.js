@@ -614,6 +614,19 @@ document.addEventListener("keydown", e => {
   const modalProvOpen   = !document.getElementById("modalProveedor")?.classList.contains("hidden");
   const modalCierreOpen = !document.getElementById("modalCierreCaja")?.classList.contains("hidden");
 
+  // ── Si el modal de cobrar está abierto — solo Enter, G y Escape ──
+  if (modalVentaOpen) {
+    if (e.key === "Enter" && !isInput) {
+      e.preventDefault();
+      document.getElementById("btnConfirmarVentaFinal")?.click();
+    } else if (e.key.toLowerCase() === "g" && !isInput) {
+      e.preventDefault();
+      document.getElementById("btnGuardarTicket")?.click();
+    }
+    // Escape ya lo maneja el handler de abajo
+    return;
+  }
+
   // ── Ctrl+Enter — abrir cobrar desde cualquier lugar en vista venta ──
   if (e.key === "Enter" && e.ctrlKey && viewVenta) {
     e.preventDefault();
