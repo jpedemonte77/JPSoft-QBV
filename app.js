@@ -727,6 +727,19 @@ document.addEventListener("keydown", e => {
     if (e.key === "Enter") {
       if (scanBuffer.length >= 4) {
         if (input) { input.value = scanBuffer; setScanState("read"); applyFilters(); input.focus(); }
+        // Agregar automáticamente si hay exactamente un resultado
+        setTimeout(() => {
+          if (filtered.length === 1) {
+            addToCart(filtered[0]);
+            if (input) { input.value = ""; applyFilters(); }
+            setScanState("normal");
+          } else if (filtered.length === 0) {
+            showToast("Producto no encontrado", "error");
+            if (input) { input.value = ""; applyFilters(); }
+            setScanState("normal");
+          }
+          // Si hay más de un resultado deja la lista filtrada para que el usuario elija
+        }, 100);
       }
       scanBuffer = ""; return;
     }
