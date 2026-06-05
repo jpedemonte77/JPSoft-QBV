@@ -614,16 +614,28 @@ document.addEventListener("keydown", e => {
   const modalProvOpen   = !document.getElementById("modalProveedor")?.classList.contains("hidden");
   const modalCierreOpen = !document.getElementById("modalCierreCaja")?.classList.contains("hidden");
 
-  // ── Si el modal de cobrar está abierto — solo Enter, G y Escape ──
+  // ── Si el modal de cobrar está abierto — bloquear fondo, solo Enter/G/Escape ──
   if (modalVentaOpen) {
-    if (e.key === "Enter" && !isInput) {
-      e.preventDefault();
-      document.getElementById("btnConfirmarVentaFinal")?.click();
-    } else if (e.key.toLowerCase() === "g" && !isInput) {
-      e.preventDefault();
-      document.getElementById("btnGuardarTicket")?.click();
+    // Ignorar si el foco está en un input del propio modal (ej: descuento)
+    const enInputModal = isInput && document.activeElement?.closest("#modalVenta");
+    if (!enInputModal) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        document.getElementById("btnConfirmarVentaFinal")?.click();
+        return;
+      }
+      if (e.key.toLowerCase() === "g") {
+        e.preventDefault();
+        document.getElementById("btnGuardarTicket")?.click();
+        return;
+      }
+      if (e.key === "Escape") {
+        document.getElementById("modalVenta").classList.add("hidden");
+        return;
+      }
     }
-    // Escape ya lo maneja el handler de abajo
+    // Bloquear todo lo demás para que no afecte el fondo
+    if (!enInputModal) e.preventDefault();
     return;
   }
 
@@ -1091,7 +1103,13 @@ document.getElementById("btnConfirmarVenta").addEventListener("click", () => {
   }
 
   renderModalVenta();
-  document.getElementById("modalVenta").classList.remove("hidden");
+  const modalVenta = document.getElementById("modalVenta");
+  modalVenta.classList.remove("hidden");
+  // Forzar foco al modal para que las teclas funcionen sin click
+  setTimeout(() => {
+    modalVenta.setAttribute("tabindex", "-1");
+    modalVenta.focus();
+  }, 50);
 });
 
 // Event listener único para +/- en modal (se registra una sola vez)
