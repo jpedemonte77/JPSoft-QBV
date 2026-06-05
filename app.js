@@ -707,8 +707,16 @@ document.addEventListener("keydown", e => {
       scanBuffer = ""; return;
     }
 
-    // Tecla C — abrir panel de cobrar
+    // Tecla C — abrir panel de cobrar (sin foco en buscador)
     if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey && !e.altKey && document.activeElement !== input) {
+      e.preventDefault();
+      const btnCobrar = document.getElementById("btnConfirmarVenta");
+      if (btnCobrar && Object.keys(cart).length > 0) btnCobrar.click();
+      return;
+    }
+
+    // Ctrl+Enter — abrir panel de cobrar desde cualquier lugar
+    if (e.key === "Enter" && e.ctrlKey) {
       e.preventDefault();
       const btnCobrar = document.getElementById("btnConfirmarVenta");
       if (btnCobrar && Object.keys(cart).length > 0) btnCobrar.click();
