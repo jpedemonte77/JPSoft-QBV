@@ -826,8 +826,20 @@ function removeFromCartByFila() {
 
 window._changeQty = function(key, delta) {
   if (!cart[key]) return;
-  cart[key].qty = Math.max(1, cart[key].qty + delta);
-  renderCart();
+  const newQty = cart[key].qty + delta;
+  if (newQty <= 0) {
+    delete cart[key];
+    renderModalVenta();
+    renderProductosVenta();
+    renderCart();
+    if (!Object.keys(cart).length) {
+      document.getElementById("modalVenta").classList.add("hidden");
+      showToast("Venta cancelada — carrito vacío");
+    }
+  } else {
+    cart[key].qty = newQty;
+    renderCart();
+  }
 };
 
 function calcDescuento(subtotal) {
