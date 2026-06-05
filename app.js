@@ -622,6 +622,22 @@ document.addEventListener("keydown", e => {
     return;
   }
 
+  // ── Delete — quitar unidad del producto seleccionado (vista venta) ──
+  if ((e.key === "Delete" || e.key === "Backspace") && viewVenta && !isInlineEdit) {
+    // Solo si el buscador NO tiene texto seleccionado o el foco no está en él
+    if (document.activeElement !== input || input?.selectionStart === input?.selectionEnd) {
+      if (filaSeleccionada >= 0 && prodFiltered?.length) {
+        const p = prodFiltered[filaSeleccionada];
+        if (p && cart[p._id]) {
+          e.preventDefault();
+          removeFromCartByFila();
+          resaltarFila();
+          return;
+        }
+      }
+    }
+  }
+
   // ── ESCAPE — cerrar modales ──
   if (e.key === "Escape") {
     ["modalVenta","modalProducto","modalProveedor","modalImport","modalCierreCaja"].forEach(id => {
