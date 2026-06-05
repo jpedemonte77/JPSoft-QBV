@@ -642,7 +642,7 @@ document.addEventListener("keydown", e => {
     if (document.activeElement === input) {
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        filaSeleccionada = Math.min(filaSeleccionada + 1, prodFiltered.length - 1);
+        filaSeleccionada = Math.min(filaSeleccionada + 1, (prodFiltered?.length || 1) - 1);
         resaltarFila(); return;
       }
       if (e.key === "ArrowUp") {
@@ -652,17 +652,17 @@ document.addEventListener("keydown", e => {
       }
       if (e.key === "Enter") {
         e.preventDefault();
-        if (filaSeleccionada >= 0 && filaSeleccionada < prodFiltered.length) {
+        if (filaSeleccionada >= 0 && prodFiltered?.length && filaSeleccionada < prodFiltered.length) {
           addToCart(prodFiltered[filaSeleccionada]);
           resaltarFila();
-        } else if (prodFiltered.length === 1) {
+        } else if (prodFiltered?.length === 1) {
           addToCart(prodFiltered[0]);
         }
         return;
       }
       if (e.key === "ArrowRight" && document.activeElement !== input) {
         e.preventDefault();
-        if (filaSeleccionada >= 0 && filaSeleccionada < prodFiltered.length) {
+        if (filaSeleccionada >= 0 && prodFiltered?.length && filaSeleccionada < prodFiltered.length) {
           addToCart(prodFiltered[filaSeleccionada]);
           resaltarFila();
         }
@@ -670,8 +670,7 @@ document.addEventListener("keydown", e => {
       }
       if (e.key === "ArrowLeft" && document.activeElement !== input) {
         e.preventDefault();
-        removeFromCartByFila();
-        resaltarFila();
+        if (prodFiltered?.length) { removeFromCartByFila(); resaltarFila(); }
         return;
       }
       return;
@@ -681,7 +680,7 @@ document.addEventListener("keydown", e => {
       e.preventDefault();
       if (input) input.focus();
       filaSeleccionada = e.key === "ArrowDown"
-        ? Math.min(filaSeleccionada + 1, prodFiltered.length - 1)
+        ? Math.min(filaSeleccionada + 1, (prodFiltered?.length || 1) - 1)
         : Math.max(filaSeleccionada - 1, 0);
       resaltarFila(); return;
     }
