@@ -1260,7 +1260,7 @@ function renderTurnoCard(turnoKey, turno, esHoy, manana, tarde) {
   const label    = TURNO_LABEL[turnoKey];
   const apertura = turno?.apertura;
   const cierre   = turno?.cierre;
-  const { totE, totD, totM, tot, ventas } = calcTotalesTurno(turno);
+  const { totE, totD, totC, totM, tot, ventas } = calcTotalesTurno(turno);
   const yaAbierto = !!apertura;
   const yaCerrado = !!cierre;
 
