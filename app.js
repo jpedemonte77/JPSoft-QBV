@@ -1836,18 +1836,28 @@ document.getElementById("btnExportarListaExcel")?.addEventListener("click", () =
   const XLSX = window.XLSX;
   if (!XLSX) { showToast("Error: librería Excel no cargada.", "error"); return; }
 
-  const data = [["Proveedor","ID","Código","Producto","P. Lista","Ganancia %","P. Venta"]];
+  // Una hoja por proveedor
+  const porProv = {};
   lista.forEach(p => {
-    const venta  = Math.round(getPrecioVenta(p));
-    const gan    = gananciaMap[p.proveedor];
-    const ganPct = gan != null ? Math.round(gan * 100) : "";
-    data.push([p.proveedor||"", p.id||"", p.cod||"", p.desc||"", p.lista||0, ganPct, venta]);
+    const prov = p.proveedor || "Sin proveedor";
+    if (!porProv[prov]) porProv[prov] = [];
+    porProv[prov].push(p);
   });
 
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(data);
-  ws["!cols"] = [14,8,14,30,10,10,10].map(w => ({ wch: w }));
-  XLSX.utils.book_append_sheet(wb, ws, "Lista de Precios");
+  Object.entries(porProv).sort((a,b) => a[0].localeCompare(b[0])).forEach(([prov, prods]) => {
+    const data = [["ID","Código","Producto","P. Lista","Ganancia %","P. Venta"]];
+    prods.forEach(p => {
+      const venta  = Math.round(getPrecioVenta(p));
+      const gan    = gananciaMap[p.proveedor];
+      const ganPct = gan != null ? Math.round(gan * 100) : "";
+      data.push([p.id||"", p.cod||"", p.desc||"", p.lista||0, ganPct, venta]);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(data);
+    ws["!cols"] = [8,14,30,10,10,10].map(w => ({ wch: w }));
+    XLSX.utils.book_append_sheet(wb, ws, prov.slice(0,31));
+  });
+
   XLSX.writeFile(wb, `JPSoft_QBV_Precios_${todayKey()}.xlsx`);
   showToast("Lista exportada ✓", "success");
 });
@@ -1879,30 +1889,53 @@ document.getElementById("btnImprimirListaPrecios")?.addEventListener("click", as
   const now = new Date().toLocaleDateString("es-AR", { day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
   const filtroLabel = filtro || "Todos los proveedores";
 
+  // Agrupar por proveedor para el PDF
+  const porProvPDF = {};
+  lista.forEach(p => {
+    const prov = p.proveedor || "Sin proveedor";
+    if (!porProvPDF[prov]) porProvPDF[prov] = [];
+    porProvPDF[prov].push(p);
+  });
+
+  const seccionesPDF = Object.entries(porProvPDF).sort((a,b) => a[0].localeCompare(b[0])).map(([prov, prods]) => {
+    const rowsProv = prods.map(p => {
+      const venta  = fmt(Math.round(getPrecioVenta(p)));
+      const gan    = gananciaMap[p.proveedor];
+      const ganPct = gan != null ? Math.round(gan * 100) + "%" : "—";
+      return `<tr style="border-bottom:1px solid #f0f0f0">
+        <td style="padding:4px 8px">${p.id||"—"}</td>
+        <td style="padding:4px 8px;font-family:monospace;font-size:10px;color:#666">${p.cod||"—"}</td>
+        <td style="padding:4px 8px;font-weight:500">${p.desc||"—"}</td>
+        <td style="padding:4px 8px;text-align:right">${fmt(p.lista||0)}</td>
+        <td style="padding:4px 8px;text-align:center;color:#666">${ganPct}</td>
+        <td style="padding:4px 8px;text-align:right;font-weight:600">${venta}</td>
+      </tr>`;
+    }).join("");
+    return `
+      <div style="margin-bottom:16px">
+        <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#fff;background:#111;padding:5px 8px;margin-bottom:0">${prov}</div>
+        <table style="width:100%;border-collapse:collapse;font-size:10.5px">
+          <thead><tr style="background:#f5f5f5">
+            <th style="text-align:left;padding:4px 8px;width:40px">ID</th>
+            <th style="text-align:left;padding:4px 8px;width:110px">Código</th>
+            <th style="text-align:left;padding:4px 8px">Producto</th>
+            <th style="text-align:right;padding:4px 8px;width:70px">P. Lista</th>
+            <th style="text-align:center;padding:4px 8px;width:50px">Gan.</th>
+            <th style="text-align:right;padding:4px 8px;width:70px">P. Venta</th>
+          </tr></thead>
+          <tbody>${rowsProv}</tbody>
+        </table>
+      </div>`;
+  }).join("");
+
   const content = `
-    <div style="font-family:'DM Sans',sans-serif;font-size:12px;color:#111;padding:2rem;max-width:700px;margin:0 auto">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;border-bottom:2px solid #111;padding-bottom:8px">
-        <div>
-          <div style="font-size:16px;font-weight:600">JPSoft | QBV — Lista de Precios</div>
-          <div style="font-size:11px;color:#888;margin-top:2px">${filtroLabel} · ${now}</div>
-        </div>
-        <div style="font-size:11px;color:#aaa">${lista.length} productos</div>
+    <div style="font-family:'DM Sans',sans-serif;font-size:11px;color:#111;padding:15mm 15mm 15mm 15mm;width:180mm;box-sizing:border-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-bottom:2px solid #111;padding-bottom:6px">
+        <div style="font-size:14px;font-weight:600">JPSoft | QBV — Lista de Precios</div>
+        <div style="font-size:10px;color:#888">${lista.length} productos · ${now}</div>
       </div>
-      <table style="width:100%;border-collapse:collapse;font-size:11px">
-        <thead>
-          <tr style="background:#f5f5f5">
-            <th style="text-align:left;padding:5px 8px;border-bottom:1px solid #ddd">Proveedor</th>
-            <th style="text-align:left;padding:5px 8px;border-bottom:1px solid #ddd">ID</th>
-            <th style="text-align:left;padding:5px 8px;border-bottom:1px solid #ddd">Código</th>
-            <th style="text-align:left;padding:5px 8px;border-bottom:1px solid #ddd">Producto</th>
-            <th style="text-align:right;padding:5px 8px;border-bottom:1px solid #ddd">P. Lista</th>
-            <th style="text-align:center;padding:5px 8px;border-bottom:1px solid #ddd">Gan.</th>
-            <th style="text-align:right;padding:5px 8px;border-bottom:1px solid #ddd">P. Venta</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <div style="font-size:10px;color:#bbb;text-align:center;margin-top:1.5rem">JPSoft | QBV · ${now}</div>
+      ${seccionesPDF}
+      <div style="font-size:9px;color:#bbb;text-align:center;margin-top:10px;border-top:1px solid #eee;padding-top:6px">JPSoft | QBV · ${now}</div>
     </div>`;
 
   const btn = document.getElementById("btnImprimirListaPrecios");
@@ -1910,20 +1943,23 @@ document.getElementById("btnImprimirListaPrecios")?.addEventListener("click", as
   btn.disabled = true; btn.textContent = "Generando…";
 
   const container = document.createElement("div");
-  container.style.cssText = "position:fixed;left:-9999px;top:0;width:750px;background:#fff";
+  // Ancho exacto A4 portrait: 210mm ≈ 794px a 96dpi
+  container.style.cssText = "position:fixed;left:-9999px;top:0;width:794px;background:#fff";
   container.innerHTML = content;
   document.body.appendChild(container);
 
   try {
-    const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: "#fff" });
+    const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: "#fff", width: 794 });
     const { jsPDF } = window.jspdf;
-    const pdf  = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-    const imgW = 297;
+    const pdf  = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+    const margin = 10;
+    const imgW = 210 - margin * 2;
     const imgH = (canvas.height * imgW) / canvas.width;
-    const pages = Math.ceil(imgH / 210);
+    const pageH = 297 - margin * 2;
+    const pages = Math.ceil(imgH / pageH);
     for (let i = 0; i < pages; i++) {
       if (i > 0) pdf.addPage();
-      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, -i * 210, imgW, imgH);
+      pdf.addImage(canvas.toDataURL("image/png"), "PNG", margin, margin - i * pageH, imgW, imgH);
     }
     pdf.save(`JPSoft_QBV_Precios_${todayKey()}.pdf`);
     showToast("Lista impresa ✓", "success");
@@ -2418,4 +2454,3 @@ document.getElementById("btnEliminarProveedor").addEventListener("click", async 
 });
 
 // Cerrar modales con Escape
-
