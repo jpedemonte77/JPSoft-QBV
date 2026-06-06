@@ -2794,12 +2794,7 @@ function setDefaultDates() {
 // ============================================================
 //  NAVEGACIÓN
 // ============================================================
-// navegación ya manejada por el handler principal
-// VIEWS duplicado eliminado — se usa el definido arriba
-if (false) {
-    document.getElementById("sidebar").classList.remove("open");
-    document.getElementById("sidebar-overlay").classList.remove("open");
-  });
+);
 });
 
 document.getElementById("menu-btn").addEventListener("click", () => {
