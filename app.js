@@ -1929,7 +1929,7 @@ document.getElementById("btnImprimirListaPrecios")?.addEventListener("click", as
   }).join("");
 
   const content = `
-    <div style="font-family:'DM Sans',sans-serif;font-size:11px;color:#111;padding:15mm 15mm 15mm 15mm;width:180mm;box-sizing:border-box">
+    <div style="font-family:'DM Sans',sans-serif;font-size:11px;color:#111;padding:8mm 10mm 8mm 10mm;width:210mm;box-sizing:border-box">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;border-bottom:2px solid #111;padding-bottom:6px">
         <div style="font-size:14px;font-weight:600">JPSoft | QBV — Lista de Precios</div>
         <div style="font-size:10px;color:#888">${lista.length} productos · ${now}</div>
@@ -1943,7 +1943,6 @@ document.getElementById("btnImprimirListaPrecios")?.addEventListener("click", as
   btn.disabled = true; btn.textContent = "Generando…";
 
   const container = document.createElement("div");
-  // Ancho exacto A4 portrait: 210mm ≈ 794px a 96dpi
   container.style.cssText = "position:fixed;left:-9999px;top:0;width:794px;background:#fff";
   container.innerHTML = content;
   document.body.appendChild(container);
@@ -1952,23 +1951,23 @@ document.getElementById("btnImprimirListaPrecios")?.addEventListener("click", as
     const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: "#fff", width: 794 });
     const { jsPDF } = window.jspdf;
     const pdf    = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-    const margin = 12;
-    const imgW   = 210 - margin * 2;
+    // Sin márgenes extra — el padding ya está en el HTML
+    const imgW   = 210;
     const imgH   = (canvas.height * imgW) / canvas.width;
-    const pageH  = 297 - margin * 2;
+    const pageH  = 297;
     const pages  = Math.ceil(imgH / pageH);
-    const imgData = canvas.toDataURL("image/png");
     for (let i = 0; i < pages; i++) {
       if (i > 0) pdf.addPage();
-      // Cada página recorta su porción de la imagen
-      const srcY      = i * (canvas.height / pages);
-      const srcH      = canvas.height / pages;
+      const srcY       = Math.round(i * (canvas.height / pages));
+      const srcH       = Math.round(canvas.height / pages);
       const pageCanvas = document.createElement("canvas");
       pageCanvas.width  = canvas.width;
       pageCanvas.height = srcH;
       const ctx = pageCanvas.getContext("2d");
+      ctx.fillStyle = "#fff";
+      ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
       ctx.drawImage(canvas, 0, -srcY);
-      pdf.addImage(pageCanvas.toDataURL("image/png"), "PNG", margin, margin, imgW, pageH);
+      pdf.addImage(pageCanvas.toDataURL("image/png"), "PNG", 0, 0, imgW, pageH);
     }
     pdf.save(`JPSoft_QBV_Precios_${todayKey()}.pdf`);
     showToast("Lista impresa ✓", "success");
