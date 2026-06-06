@@ -2698,6 +2698,16 @@ document.getElementById("btnEliminarProveedor").addEventListener("click", async 
 //  VISTAS ANÁLISIS Y SISTEMA (migradas desde Admin)
 // ============================================================
 
+const ADMIN_USUARIOS = [
+  "joaquin@jpsoft-qbv.com",
+  "carlos@jpsoft-qbv.com"
+];
+
+const TODOS_USUARIOS = [
+  { email: "joaquin@jpsoft-qbv.com", nombre: "Joaquín", admin: true },
+  { email: "carlos@jpsoft-qbv.com",  nombre: "Carlos",  admin: true },
+];
+
 
 
 function getPeriodRange(periodo) {
@@ -2716,63 +2726,6 @@ function getPeriodRange(periodo) {
   return null;
 }
 
-// ============================================================
-//  AUTH
-// ============================================================
-onAuthStateChanged(auth, user => {
-  if (!user) {
-    document.getElementById("login-screen").classList.remove("hidden");
-    document.getElementById("app-wrapper").classList.add("hidden");
-    document.getElementById("acceso-denegado").classList.add("hidden");
-    return;
-  }
-
-  // Verificar acceso admin
-  if (!ADMIN_USUARIOS.includes(user.email)) {
-    document.getElementById("login-screen").classList.add("hidden");
-    document.getElementById("app-wrapper").classList.add("hidden");
-    document.getElementById("acceso-denegado").classList.remove("hidden");
-    return;
-  }
-
-  // Acceso OK
-  document.getElementById("login-screen").classList.add("hidden");
-  document.getElementById("acceso-denegado").classList.add("hidden");
-  document.getElementById("app-wrapper").classList.remove("hidden");
-
-  const _raw  = ADMIN_NOMBRES[user.email] || user.email.split("@")[0];
-  const nombre = _raw.charAt(0).toUpperCase() + _raw.slice(1);
-  document.getElementById("user-nombre").textContent = nombre;
-  document.getElementById("user-avatar").textContent = iniciales(nombre);
-
-  initFirebase();
-});
-
-document.getElementById("login-form").addEventListener("submit", async e => {
-  e.preventDefault();
-  const email = document.getElementById("login-email").value.trim();
-  const pwd   = document.getElementById("login-password").value;
-  const btn   = document.getElementById("btn-login");
-  const err   = document.getElementById("login-error");
-  err.textContent = "";
-  btn.disabled = true;
-  btn.textContent = "Ingresando…";
-  try {
-    await signInWithEmailAndPassword(auth, email, pwd);
-  } catch(ex) {
-    err.textContent = ex.code === "auth/too-many-requests"
-      ? "Demasiados intentos. Esperá unos minutos."
-      : "Email o contraseña incorrectos.";
-    btn.disabled = false;
-    btn.textContent = "Ingresar";
-  }
-});
-
-document.getElementById("btn-logout").addEventListener("click", async () => {
-  const nombre = document.getElementById("user-nombre").textContent || "usuario";
-  if (!confirm(`¿Cerrar sesión como ${nombre}?`)) return;
-  await signOut(auth);
-});
 
 // ============================================================
 //  FIREBASE
@@ -2972,9 +2925,8 @@ function renderPrecios() {
   }).join("");
 }
 
-document.getElementById("preciosFilterProv").addEventListener("change", renderPrecios);
-
-document.getElementById("btnImprimirPrecios").addEventListener("click", () => window.print());
+document.getElementById("preciosFilterProv")?.addEventListener("change", renderPrecios);
+document.getElementById("btnImprimirPrecios")?.addEventListener("click", () => window.print());
 
 document.getElementById("btnExportarPrecios").addEventListener("click", () => {
   const filtro = document.getElementById("preciosFilterProv").value;
