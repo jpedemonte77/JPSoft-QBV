@@ -2582,16 +2582,18 @@ function generarReporte() {
   });
 
   const diasTabla = document.getElementById("reporteDiasTabla");
-  if (!Object.keys(diasMap).length) {
-    diasTabla.innerHTML = `<div class="empty-row">Sin ventas en el período.</div>`;
-  } else {
-    diasTabla.innerHTML = Object.entries(diasMap).sort((a,b) => b[0].localeCompare(a[0])).map(([k, d]) => `
-      <div style="display:grid;grid-template-columns:1fr 80px 80px 80px;padding:9px 14px;border-bottom:1px solid var(--border);font-size:13px;align-items:center">
-        <span>${fechaLabel(k)}</span>
-        <span style="text-align:right">${d.ventas}</span>
-        <span style="text-align:right;font-weight:500">${fmt(d.total)}</span>
-        <span style="text-align:right;color:var(--text3)">${fmt(d.total / d.ventas)}</span>
-      </div>`).join("");
+  if (diasTabla) {
+    if (!Object.keys(diasMap).length) {
+      diasTabla.innerHTML = `<div class="empty-row">Sin ventas en el período.</div>`;
+    } else {
+      diasTabla.innerHTML = Object.entries(diasMap).sort((a,b) => b[0].localeCompare(a[0])).map(([k, d]) => `
+        <div style="display:grid;grid-template-columns:1fr 80px 80px 80px;padding:9px 14px;border-bottom:1px solid var(--border);font-size:13px;align-items:center">
+          <span>${fechaLabel(k)}</span>
+          <span style="text-align:right">${d.ventas}</span>
+          <span style="text-align:right;font-weight:500">${fmt(d.total)}</span>
+          <span style="text-align:right;color:var(--text3)">${fmt(Math.round(d.total / d.ventas))}</span>
+        </div>`).join("");
+    }
   }
 
   // Top productos
@@ -2605,33 +2607,37 @@ function generarReporte() {
   });
 
   const topProds = document.getElementById("reporteTopProductos");
-  const sorted = Object.entries(prodMap).sort((a,b) => b[1].qty - a[1].qty).slice(0, 15);
-  if (!sorted.length) {
-    topProds.innerHTML = `<div class="empty-row">Sin datos.</div>`;
-  } else {
-    topProds.innerHTML = sorted.map(([desc, d]) => `
-      <div style="display:grid;grid-template-columns:1fr 60px 80px;padding:9px 14px;border-bottom:1px solid var(--border);font-size:12px;align-items:center">
-        <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${desc}">${desc}</span>
-        <span style="text-align:right;font-weight:500">${d.qty}</span>
-        <span style="text-align:right">${fmt(d.total)}</span>
-      </div>`).join("");
+  if (topProds) {
+    const sorted = Object.entries(prodMap).sort((a,b) => b[1].qty - a[1].qty).slice(0, 15);
+    if (!sorted.length) {
+      topProds.innerHTML = `<div class="empty-row">Sin datos.</div>`;
+    } else {
+      topProds.innerHTML = sorted.map(([desc, d]) => `
+        <div style="display:grid;grid-template-columns:1fr 60px 80px;padding:9px 14px;border-bottom:1px solid var(--border);font-size:12px;align-items:center">
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${desc}">${desc}</span>
+          <span style="text-align:right;font-weight:500">${d.qty}</span>
+          <span style="text-align:right">${fmt(d.total)}</span>
+        </div>`).join("");
+    }
   }
 
   // Detalle ventas
   const metLabel = { efectivo: "Efectivo", debito: "Débito", credito: "Crédito", mp: "Mercado Pago" };
-  const metClass = { efectivo: "metodo-efectivo", debito: "metodo-debito", mp: "metodo-mp" };
+  const metClass = { efectivo: "metodo-efectivo", debito: "metodo-debito", mp: "metodo-mp", credito: "metodo-credito" };
   const detalle  = document.getElementById("reporteDetalle");
-  if (!ventas.length) {
-    detalle.innerHTML = `<div class="empty-row">Sin ventas en el período.</div>`;
-  } else {
-    detalle.innerHTML = [...ventas].sort((a,b) => b.fecha.localeCompare(a.fecha) || (b.hora||"").localeCompare(a.hora||"")).map(v => `
-      <div class="timeline-row" style="grid-template-columns:90px 1fr 100px 80px 90px">
-        <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${fechaLabel(v.fecha)}</span>
-        <span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(v.items||[]).map(i=>i.desc).join(", ")}</span>
-        <span class="${metClass[v.metodo]||""}">${metLabel[v.metodo]||v.metodo}</span>
-        <span class="num">${(v.items||[]).reduce((s,i)=>s+i.qty,0)}</span>
-        <span class="num" style="font-weight:500">${fmt(v.total)}</span>
-      </div>`).join("");
+  if (detalle) {
+    if (!ventas.length) {
+      detalle.innerHTML = `<div class="empty-row">Sin ventas en el período.</div>`;
+    } else {
+      detalle.innerHTML = [...ventas].sort((a,b) => b.fecha.localeCompare(a.fecha) || (b.hora||"").localeCompare(a.hora||"")).map(v => `
+        <div class="timeline-row" style="grid-template-columns:90px 1fr 100px 80px 90px">
+          <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3)">${fechaLabel(v.fecha)}</span>
+          <span style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${(v.items||[]).map(i=>i.desc).join(", ")}</span>
+          <span class="${metClass[v.metodo]||""}">${metLabel[v.metodo]||v.metodo}</span>
+          <span class="num">${(v.items||[]).reduce((s,i)=>s+i.qty,0)}</span>
+          <span class="num" style="font-weight:500">${fmt(v.total)}</span>
+        </div>`).join("");
+    }
   }
 }
 
@@ -3111,5 +3117,3 @@ function renderHistorialPrecios() {
 
 document.getElementById("histFilterProv")?.addEventListener("change", renderHistorialPrecios);
 document.getElementById("histFilterProd")?.addEventListener("input",  renderHistorialPrecios);
-
-
