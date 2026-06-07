@@ -439,13 +439,12 @@ body {
 .view {
   display: none;
   padding: 1.5rem;
-  flex: 1;
   width: 100%;
-  min-height: 0;
-  overflow-y: auto;
   box-sizing: border-box;
+  overflow-y: auto;
+  height: calc(100vh - var(--topbar-h));
 }
-.view.active { display: flex; flex-direction: column; }
+.view.active { display: block; }
 
 .view-header {
   display: flex;
