@@ -1366,7 +1366,7 @@ document.getElementById("btnGuardarTicket").addEventListener("click", () => {
     return `${det.padEnd(35, ".")} ${fmtDec(sub)}`;
   }).join("\n");
   const _notaTxt = document.getElementById("notaVentaInput")?.value?.trim() || "";
-  const txt = `JPSoft | Tienda\n${fecha} — ${hora} hs\nMétodo: ${metodoLabel[metodoSeleccionado]}${_notaTxt ? "\nNota: " + _notaTxt : ""}\n\n${lineas}\n${"─".repeat(45)}\nTOTAL: ${fmtDec(total)}`;
+  const txt = `JPSoft | Tienda\n${fecha} — ${hora} hs\nMétodo: ${metodoLabel[metodoSeleccionado]}${_notaTxt ? "\nNota: " + _notaTxt : ""}\n\n${lineas}\n\n${"─".repeat(45)}\nTOTAL: ${fmtDec(total)}`;
   const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
   const a = document.createElement("a");
   a.href = URL.createObjectURL(blob);
@@ -3498,5 +3498,3 @@ document.getElementById("histFilterProd")?.addEventListener("input",  renderHist
 
 document.getElementById("actFiltroTipo")?.addEventListener("change", renderActividad);
 document.getElementById("actFiltroUsuario")?.addEventListener("change", renderActividad);
-
-
