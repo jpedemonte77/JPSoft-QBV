@@ -897,7 +897,7 @@ td {
 }
 td.num { text-align: right; font-variant-numeric: tabular-nums; }
 tr:last-child td { border-bottom: none; }
-tr:hover td { background: #fafafa; cursor: pointer; }
+tr:hover td { background: var(--bg3); cursor: pointer; }
 
 .id-cell  { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); }
 .cod-cell { font-family: 'DM Mono', monospace; font-size: 11px; color: #bbb; }
@@ -1100,7 +1100,7 @@ mark { background: #fef9c3; color: #854d0e; border-radius: 2px; padding: 0 1px; 
   align-items: center;
 }
 .timeline-row:last-child { border-bottom: none; }
-.timeline-row:hover { background: #fafafa; }
+.timeline-row:hover { background: var(--bg3); }
 
 /* Fila seleccionada con teclado */
 .fila-activa { background: var(--info-bg) !important; outline: 1px solid var(--info-border); }
