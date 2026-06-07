@@ -2574,8 +2574,15 @@ function getPeriodRange(periodo) {
   const pad = n => String(n).padStart(2,"0");
   const key = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
   if (periodo === "hoy") return { desde: key(hoy), hasta: key(hoy) };
+  if (periodo === "7dias") {
+    const hace7 = new Date(hoy); hace7.setDate(hoy.getDate() - 6);
+    return { desde: key(hace7), hasta: key(hoy) };
+  }
   if (periodo === "semana") {
-    const lunes = new Date(hoy); lunes.setDate(hoy.getDate() - hoy.getDay() + 1);
+    const lunes = new Date(hoy);
+    const diaSemana = hoy.getDay(); // 0=domingo, 1=lunes, ..., 6=sábado
+    const diasDesdelunes = diaSemana === 0 ? 6 : diaSemana - 1;
+    lunes.setDate(hoy.getDate() - diasDesdelunes);
     return { desde: key(lunes), hasta: key(hoy) };
   }
   if (periodo === "mes") {
@@ -3373,5 +3380,3 @@ function renderHistorialPrecios() {
 
 document.getElementById("histFilterProv")?.addEventListener("change", renderHistorialPrecios);
 document.getElementById("histFilterProd")?.addEventListener("input",  renderHistorialPrecios);
-
-
