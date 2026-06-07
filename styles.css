@@ -58,7 +58,52 @@
   font-family: 'DM Sans', system-ui, sans-serif;
 }
 
+/* ════════════════════════════
+   MODO NOCTURNO
+════════════════════════════ */
+.dark {
+  --bg:       #111113;
+  --bg2:      #1a1a1c;
+  --bg3:      #2a2a2e;
+  --surface:  #1a1a1c;
+  --surface2: #222226;
+
+  --border:  rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+
+  --text:  #f0f0f0;
+  --text2: #aaaaaa;
+  --text3: #666666;
+
+  --accent:      #5a5aff;
+  --accent-dark: #7a7aff;
+
+  --success:        #3db87a;
+  --success-bg:     rgba(61,184,122,0.1);
+  --success-border: rgba(61,184,122,0.25);
+
+  --danger:        #e05a3a;
+  --danger-bg:     rgba(224,90,58,0.1);
+  --danger-border: rgba(224,90,58,0.25);
+
+  --warn:        #d4900a;
+  --warn-bg:     rgba(250,174,0,0.1);
+  --warn-border: rgba(250,174,0,0.25);
+
+  --info:        #4a9eff;
+  --info-bg:     rgba(74,158,255,0.1);
+  --info-border: rgba(74,158,255,0.25);
+
+  --mp:        #33b5f5;
+  --mp-bg:     rgba(51,181,245,0.1);
+  --mp-border: rgba(51,181,245,0.25);
+
+  --shadow: 0 2px 12px rgba(0,0,0,0.4);
+}
+
+
 html, body { height: 100%; }
+html.dark { color-scheme: dark; }
 body {
   background: var(--bg);
   color: var(--text);
@@ -135,9 +180,9 @@ body {
   display: flex;
   flex: 1;
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
   min-width: 0;
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 /* ===========================
@@ -269,7 +314,8 @@ body {
   width: calc(100% - var(--sidebar-w));
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 /* ===========================
@@ -438,10 +484,24 @@ body {
 .view {
   display: none;
   padding: 1.5rem;
-  flex: 1;
   width: 100%;
+  box-sizing: border-box;
+  overflow-y: auto;
+  height: calc(100vh - var(--topbar-h));
 }
-.view.active { display: flex; flex-direction: column; }
+.view.active { display: block; }
+
+/* Vista Venta: layout flex especial — tabla scrollable + barra cobrar fija */
+#view-venta {
+  padding: 0 !important;
+  overflow: hidden !important;
+  display: none;
+  flex-direction: column;
+}
+#view-venta.active {
+  display: flex !important;
+  height: calc(100vh - var(--topbar-h));
+}
 
 .view-header {
   display: flex;
@@ -675,11 +735,7 @@ body {
   min-height: 0;
 }
 
-/* Vista venta fullscreen — tabla scrollable, barra cobrar fija */
-#view-venta {
-  overflow: hidden;
-}
-
+/* Vista venta fullscreen — tabla scrollable + barra cobrar fija */
 #view-venta .table-wrap {
   flex: 1;
   overflow-y: auto;
@@ -841,7 +897,7 @@ td {
 }
 td.num { text-align: right; font-variant-numeric: tabular-nums; }
 tr:last-child td { border-bottom: none; }
-tr:hover td { background: #fafafa; cursor: pointer; }
+tr:hover td { background: var(--bg3); cursor: pointer; }
 
 .id-cell  { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); }
 .cod-cell { font-family: 'DM Mono', monospace; font-size: 11px; color: #bbb; }
@@ -943,7 +999,7 @@ mark { background: #fef9c3; color: #854d0e; border-radius: 2px; padding: 0 1px; 
 .cart-total-amount { font-size: 22px; font-weight: 600; color: var(--text); font-family: 'DM Mono', monospace; }
 
 /* Métodos de pago */
-.gasto-chip {
+.nota-chip {
   padding: 5px 12px;
   border-radius: 20px;
   border: 1px solid var(--border2);
@@ -954,8 +1010,8 @@ mark { background: #fef9c3; color: #854d0e; border-radius: 2px; padding: 0 1px; 
   cursor: pointer;
   transition: all .15s;
 }
-.gasto-chip:hover { background: var(--bg3); color: var(--text); }
-.gasto-chip.active { background: var(--danger); color: #fff; border-color: var(--danger); }
+.nota-chip:hover { background: var(--bg3); color: var(--text); }
+.nota-chip.active { background: var(--accent); color: #fff; border-color: var(--accent); }
 
 .pago-chip {
   flex: 1;
@@ -999,8 +1055,10 @@ mark { background: #fef9c3; color: #854d0e; border-radius: 2px; padding: 0 1px; 
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: auto;
   flex: 1;
+  min-height: 0;
 }
 
 /* ===========================
@@ -1022,7 +1080,7 @@ mark { background: #fef9c3; color: #854d0e; border-radius: 2px; padding: 0 1px; 
 
 .timeline-header {
   display: grid;
-  grid-template-columns: 1fr 90px 110px 75px 50px 70px;
+  grid-template-columns: 1fr 90px 110px 75px 50px 70px 70px;
   padding: 8px 14px;
   background: var(--surface2);
   border-bottom: 1px solid var(--border);
@@ -1035,14 +1093,14 @@ mark { background: #fef9c3; color: #854d0e; border-radius: 2px; padding: 0 1px; 
 
 .timeline-row {
   display: grid;
-  grid-template-columns: 1fr 90px 110px 75px 50px 70px;
+  grid-template-columns: 1fr 90px 110px 75px 50px 70px 70px;
   padding: 9px 14px;
   border-bottom: 1px solid var(--border);
   font-size: 13px;
   align-items: center;
 }
 .timeline-row:last-child { border-bottom: none; }
-.timeline-row:hover { background: #fafafa; }
+.timeline-row:hover { background: var(--bg3); }
 
 /* Fila seleccionada con teclado */
 .fila-activa { background: var(--info-bg) !important; outline: 1px solid var(--info-border); }
@@ -1187,7 +1245,7 @@ tr.fila-activa td { background: var(--info-bg); }
   .stats-grid { grid-template-columns: 1fr 1fr; }
   .proveedores-grid { grid-template-columns: 1fr; }
   .timeline-header,
-  .timeline-row { grid-template-columns: 1fr 70px 80px; }
+  .timeline-row { grid-template-columns: 1fr 70px 80px 60px; }
   .timeline-header > :nth-child(4),
   .timeline-header > :nth-child(5),
   .timeline-row > :nth-child(4),
