@@ -2635,13 +2635,13 @@ function generarReporte() {
         <td style="padding:8px 10px;text-align:right;font-weight:500">${fmt(v.total)}</td>
       </tr>`).join("");
     detalle.innerHTML = rows.length
-      ? `<table style="width:100%;border-collapse:collapse">
-          <thead><tr style="background:var(--bg2);font-size:11px;color:var(--text3)">
-            <th style="padding:6px 10px;text-align:left;font-weight:500">Fecha</th>
-            <th style="padding:6px 10px;text-align:left;font-weight:500">Ítems</th>
-            <th style="padding:6px 10px;text-align:left;font-weight:500">Método</th>
-            <th style="padding:6px 10px;text-align:right;font-weight:500">Cant.</th>
-            <th style="padding:6px 10px;text-align:right;font-weight:500">Total</th>
+      ? `<table style="width:100%;border-collapse:collapse;color:var(--text)">
+          <thead><tr style="background:var(--surface2);font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">
+            <th style="padding:8px 14px;text-align:left;font-weight:500;border-bottom:1px solid var(--border)">Fecha</th>
+            <th style="padding:8px 14px;text-align:left;font-weight:500;border-bottom:1px solid var(--border)">Ítems</th>
+            <th style="padding:8px 14px;text-align:left;font-weight:500;border-bottom:1px solid var(--border)">Método</th>
+            <th style="padding:8px 14px;text-align:right;font-weight:500;border-bottom:1px solid var(--border)">Cant.</th>
+            <th style="padding:8px 14px;text-align:right;font-weight:500;border-bottom:1px solid var(--border)">Total</th>
           </tr></thead><tbody>${rows}</tbody></table>`
       : `<div class="empty-row">Sin ventas en el período.</div>`;
   }
