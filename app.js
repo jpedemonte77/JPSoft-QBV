@@ -2624,6 +2624,7 @@ function generarReporte() {
   // Detalle ventas
   const metLabel = { efectivo: "Efectivo", debito: "Débito", credito: "Crédito", mp: "Mercado Pago" };
   const metClass = { efectivo: "metodo-efectivo", debito: "metodo-debito", mp: "metodo-mp", credito: "metodo-credito" };
+  console.log("Ventas para detalle:", ventas.length, ventas[0]);
   const detalle  = document.getElementById("reporteDetalle");
   if (detalle) {
     if (!ventas.length) {
@@ -3237,5 +3238,3 @@ function renderHistorialPrecios() {
 
 document.getElementById("histFilterProv")?.addEventListener("change", renderHistorialPrecios);
 document.getElementById("histFilterProd")?.addEventListener("input",  renderHistorialPrecios);
-
-
