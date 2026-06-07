@@ -2560,17 +2560,17 @@ function generarReporte() {
   });
   const tot = totE + totD + totC + totM;
 
-  document.getElementById("rStatTotal")?.textContent      = fmt(tot);
-  document.getElementById("rStatVentas")?.textContent     = ventas.length + " ventas";
-  document.getElementById("rStatEfectivo")?.textContent   = fmt(totE);
-  document.getElementById("rStatMp")?.textContent         = fmt(totM);
-  document.getElementById("rStatDebito")?.textContent     = fmt(totD);
-  document.getElementById("rStatCredito")?.textContent    = fmt(totC);
-  document.getElementById("rStatEfectivoPct")?.textContent = pct(totE, tot);
-  document.getElementById("rStatMpPct")?.textContent       = pct(totM, tot);
-  document.getElementById("rStatDebitoPct")?.textContent   = pct(totD, tot);
-  document.getElementById("rStatCreditoPct")?.textContent  = pct(totC, tot);
-  document.getElementById("btnExportarReportePDF")?.style.display = "";
+  (document.getElementById("rStatTotal") || {}).textContent = fmt(tot);
+  (document.getElementById("rStatVentas") || {}).textContent = ventas.length + " ventas";
+  (document.getElementById("rStatEfectivo") || {}).textContent = fmt(totE);
+  (document.getElementById("rStatMp") || {}).textContent = fmt(totM);
+  (document.getElementById("rStatDebito") || {}).textContent = fmt(totD);
+  (document.getElementById("rStatCredito") || {}).textContent = fmt(totC);
+  (document.getElementById("rStatEfectivoPct") || {}).textContent = pct(totE, tot);
+  (document.getElementById("rStatMpPct") || {}).textContent = pct(totM, tot);
+  (document.getElementById("rStatDebitoPct") || {}).textContent = pct(totD, tot);
+  (document.getElementById("rStatCreditoPct") || {}).textContent = pct(totC, tot);
+  (document.getElementById("btnExportarReportePDF") || {style:{}}).style.display = "";
   window._reporteData = { desde, hasta, ventas, tot, totE, totM, totD, totC };
 
   // Resumen por día
@@ -3117,5 +3117,3 @@ function renderHistorialPrecios() {
 
 document.getElementById("histFilterProv")?.addEventListener("change", renderHistorialPrecios);
 document.getElementById("histFilterProd")?.addEventListener("input",  renderHistorialPrecios);
-
-
