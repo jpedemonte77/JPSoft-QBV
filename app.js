@@ -2624,29 +2624,26 @@ function generarReporte() {
   // Detalle ventas
   const metLabel = { efectivo: "Efectivo", debito: "Débito", credito: "Crédito", mp: "Mercado Pago" };
   const metClass = { efectivo: "metodo-efectivo", debito: "metodo-debito", mp: "metodo-mp", credito: "metodo-credito" };
-  console.log("Ventas para detalle:", ventas.length, ventas[0]);
   const detalle  = document.getElementById("reporteDetalle");
   if (detalle) {
-    if (!ventas.length) {
-      detalle.innerHTML = `<div class="empty-row">Sin ventas en el período.</div>`;
-    } else {
-      const rows = [...ventas].sort((a,b) => b.fecha.localeCompare(a.fecha) || (b.hora||"").localeCompare(a.hora||"")).map(v => `
-        <tr style="border-bottom:1px solid var(--border);font-size:12px">
-          <td style="padding:8px 10px;white-space:nowrap;color:var(--text3);font-size:11px">${fechaLabel(v.fecha)}</td>
-          <td style="padding:8px 10px">${(v.items||[]).map(i=>i.desc).join(", ")}</td>
-          <td style="padding:8px 10px" class="${metClass[v.metodo]||""}">${metLabel[v.metodo]||v.metodo}</td>
-          <td style="padding:8px 10px;text-align:right">${(v.items||[]).reduce((s,i)=>s+i.qty,0)}</td>
-          <td style="padding:8px 10px;text-align:right;font-weight:500">${fmt(v.total)}</td>
-        </tr>`).join("");
-      detalle.innerHTML = `<table style="width:100%;border-collapse:collapse">
-        <thead><tr style="background:var(--bg2);font-size:11px;color:var(--text3)">
-          <th style="padding:6px 10px;text-align:left;font-weight:500">Fecha</th>
-          <th style="padding:6px 10px;text-align:left;font-weight:500">Ítems</th>
-          <th style="padding:6px 10px;text-align:left;font-weight:500">Método</th>
-          <th style="padding:6px 10px;text-align:right;font-weight:500">Cant.</th>
-          <th style="padding:6px 10px;text-align:right;font-weight:500">Total</th>
-        </tr></thead><tbody>${rows}</tbody></table>`;
-    }
+    const rows = [...ventas].sort((a,b) => b.fecha.localeCompare(a.fecha) || (b.hora||"").localeCompare(a.hora||"")).map(v => `
+      <tr style="border-bottom:1px solid var(--border);font-size:12px">
+        <td style="padding:8px 10px;white-space:nowrap;color:var(--text3);font-size:11px">${fechaLabel(v.fecha)}</td>
+        <td style="padding:8px 10px">${(v.items||[]).map(i=>i.desc).join(", ")}</td>
+        <td style="padding:8px 10px" class="${metClass[v.metodo]||""}">${metLabel[v.metodo]||v.metodo}</td>
+        <td style="padding:8px 10px;text-align:right">${(v.items||[]).reduce((s,i)=>s+i.qty,0)}</td>
+        <td style="padding:8px 10px;text-align:right;font-weight:500">${fmt(v.total)}</td>
+      </tr>`).join("");
+    detalle.innerHTML = rows.length
+      ? `<table style="width:100%;border-collapse:collapse">
+          <thead><tr style="background:var(--bg2);font-size:11px;color:var(--text3)">
+            <th style="padding:6px 10px;text-align:left;font-weight:500">Fecha</th>
+            <th style="padding:6px 10px;text-align:left;font-weight:500">Ítems</th>
+            <th style="padding:6px 10px;text-align:left;font-weight:500">Método</th>
+            <th style="padding:6px 10px;text-align:right;font-weight:500">Cant.</th>
+            <th style="padding:6px 10px;text-align:right;font-weight:500">Total</th>
+          </tr></thead><tbody>${rows}</tbody></table>`
+      : `<div class="empty-row">Sin ventas en el período.</div>`;
   }
 }
 
