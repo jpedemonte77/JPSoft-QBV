@@ -912,14 +912,13 @@ document.addEventListener("keydown", e => {
       }
       if (e.key === "Enter") {
         e.preventDefault();
-        const idx = filaSeleccionada >= 0 && filaSeleccionada < (prodFiltered?.length || 0)
+        const query = input.value.trim();
+        if (!query || !prodFiltered?.length) return; // nada que hacer si buscador vacío o sin resultados
+        const idx = filaSeleccionada >= 0 && filaSeleccionada < prodFiltered.length
           ? filaSeleccionada : 0;
-        if (prodFiltered?.length) {
-          addToCart(prodFiltered[idx]);
-          // Blur momentáneo para que Enter no siga disparando
-          input.blur();
-          setTimeout(() => input.focus(), 50);
-        }
+        addToCart(prodFiltered[idx]);
+        input.blur();
+        setTimeout(() => input.focus(), 50);
         return;
       }
       return;
