@@ -3068,7 +3068,7 @@ function renderPrecios() {
 
 document.getElementById("preciosFilterProv")?.addEventListener("change", renderPrecios);
 
-document.getElementById("btnImprimirPrecios")?.addEventListener("click", () => window.print());
+document.getElementById("btnImprimirListaPrecios")?.addEventListener("click", () => window.print());
 
 document.getElementById("btnExportarPrecios")?.addEventListener("click", () => {
   const filtro = document.getElementById("preciosFilterProv").value;
@@ -3149,7 +3149,7 @@ document.getElementById("btnExpCaja")?.addEventListener("click", () => {
   exportarExcel([{ nombre: "Caja", data, colsMoney: [4, 6, 7, 8, 9] }], `JPSoft_Tienda_Caja_${desde}_${hasta}.xlsx`);
 });
 
-document.getElementById("btnExpProductos")?.addEventListener("click", () => {
+document.getElementById("btnExportarListaExcel")?.addEventListener("click", () => {
   const data = [["Proveedor","ID","Codigo","Producto","P. Lista","Ganancia %","P. Venta","Stock"]];
   allProducts
     .sort((a,b) => (a.proveedor||"").localeCompare(b.proveedor||"") || (a.desc||"").localeCompare(b.desc||""))
