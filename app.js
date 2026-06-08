@@ -766,6 +766,11 @@ document.addEventListener("keydown", e => {
 
   // ── Si el modal de cobrar está abierto — bloquear fondo, solo Enter/G/Escape ──
   if (modalVentaOpen) {
+    // Si hay otro modal abierto encima (ej: nuevo cliente), dejar pasar todo
+    const otroModalAbierto = ["modalCliente", "modalGasto", "modalProducto", "modalProveedor"]
+      .some(id => !document.getElementById(id)?.classList.contains("hidden"));
+    if (otroModalAbierto) return;
+
     // Ignorar si el foco está en un input del propio modal (ej: descuento)
     const enInputModal = isInput && document.activeElement?.closest("#modalVenta");
     if (!enInputModal) {
