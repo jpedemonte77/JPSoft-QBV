@@ -750,17 +750,19 @@ function renderCartLateral() {
     const pv  = Math.round(getPrecioVenta(p));
     const sub = pv * qty;
     return `<div style="padding:10px 14px;border-bottom:1px solid var(--border)">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
-        <div style="font-size:13px;font-weight:500;color:var(--text1);flex:1;padding-right:8px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.desc || ""}</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;gap:8px">
+        <div style="font-size:13px;font-weight:500;color:var(--text1);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.desc || ""}</div>
         <div style="font-size:13px;font-weight:600;color:var(--text1);flex-shrink:0">${fmt(sub)}</div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between">
+        <button class="qty-btn" data-action="remove" data-key="${k}" style="width:22px;height:22px;border-radius:4px;font-size:11px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;color:var(--text3)" title="Eliminar">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
         <div style="font-size:11px;color:var(--text3)">${fmt(pv)} c/u</div>
         <div style="display:flex;align-items:center;gap:8px">
-          <button class="qty-btn" data-action="minus" data-key="${k}" style="width:24px;height:24px;border-radius:50%;font-size:15px;line-height:1;padding:0;text-align:center">−</button>
+          <button class="qty-btn" data-action="minus" data-key="${k}" style="width:26px;height:26px;border-radius:50%;font-size:16px;line-height:1;padding:0;text-align:center">−</button>
           <span style="font-size:14px;font-weight:500;min-width:16px;text-align:center;color:var(--text1)">${qty}</span>
-          <button class="qty-btn" data-action="plus" data-key="${k}" style="width:24px;height:24px;border-radius:50%;font-size:15px;line-height:1;padding:0;text-align:center">+</button>
-          <button class="qty-btn" data-action="remove" data-key="${k}" style="width:24px;height:24px;border-radius:50%;font-size:13px;line-height:1;padding:0;text-align:center;color:var(--danger)">×</button>
+          <button class="qty-btn" data-action="plus" data-key="${k}" style="width:26px;height:26px;border-radius:50%;font-size:16px;line-height:1;padding:0;text-align:center">+</button>
         </div>
       </div>
     </div>`;
@@ -979,16 +981,6 @@ document.addEventListener("keydown", e => {
       }
       scanBuffer = ""; return;
     }
-
-    // Tecla C — abrir panel de cobrar (sin foco en buscador)
-    if (e.key.toLowerCase() === "c" && !e.ctrlKey && !e.metaKey && !e.altKey && document.activeElement !== input) {
-      e.preventDefault();
-      const btnCobrar = document.getElementById("btnConfirmarVenta");
-      if (btnCobrar && Object.keys(cart).length > 0) btnCobrar.click();
-      return;
-    }
-
-
 
     if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
       const esScan = gap < SCAN_SPEED;
