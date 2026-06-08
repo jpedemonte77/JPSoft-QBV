@@ -1045,7 +1045,7 @@ document.getElementById("searchInput").addEventListener("input", e => {
 });
 
 function resaltarFila() {
-  const filas = document.querySelectorAll("#tableBody tr");
+  const filas = document.querySelectorAll(".venta-result-row");
   filas.forEach((r, i) => {
     if (i === filaSeleccionada) {
       r.classList.add("fila-activa");
@@ -1054,17 +1054,6 @@ function resaltarFila() {
       r.classList.remove("fila-activa");
     }
   });
-  // Actualizar hint en barra cobrar
-  const cobrarHint = document.getElementById("cobrarHint");
-  if (cobrarHint) {
-    const pSel = filaSeleccionada >= 0 ? prodFiltered[filaSeleccionada] : null;
-    if (pSel && cart[pSel._id]) {
-      cobrarHint.textContent = `${pSel.desc} ×${cart[pSel._id].qty}`;
-      cobrarHint.style.display = "block";
-    } else {
-      cobrarHint.style.display = "none";
-    }
-  }
 }
 
 // ============================================================
