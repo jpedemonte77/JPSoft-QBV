@@ -755,14 +755,14 @@ function renderCartLateral() {
         <div style="font-size:13px;font-weight:600;color:var(--text1);flex-shrink:0">${fmt(sub)}</div>
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between">
-        <button class="qty-btn" data-action="remove" data-key="${k}" style="width:22px;height:22px;border-radius:4px;font-size:11px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;color:var(--text3)" title="Eliminar">
+        <button type="button" class="qty-btn" data-action="remove" data-key="${k}" style="width:22px;height:22px;border-radius:4px;font-size:11px;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;color:var(--text3)" title="Eliminar">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
         </button>
         <div style="font-size:11px;color:var(--text3)">${fmt(pv)} c/u</div>
         <div style="display:flex;align-items:center;gap:8px">
-          <button class="qty-btn" data-action="minus" data-key="${k}" style="width:26px;height:26px;border-radius:50%;font-size:16px;line-height:1;padding:0;text-align:center">−</button>
+          <button type="button" class="qty-btn" data-action="minus" data-key="${k}" style="width:26px;height:26px;border-radius:50%;font-size:16px;line-height:1;padding:0;text-align:center">−</button>
           <span style="font-size:14px;font-weight:500;min-width:16px;text-align:center;color:var(--text1)">${qty}</span>
-          <button class="qty-btn" data-action="plus" data-key="${k}" style="width:26px;height:26px;border-radius:50%;font-size:16px;line-height:1;padding:0;text-align:center">+</button>
+          <button type="button" class="qty-btn" data-action="plus" data-key="${k}" style="width:26px;height:26px;border-radius:50%;font-size:16px;line-height:1;padding:0;text-align:center">+</button>
         </div>
       </div>
     </div>`;
@@ -860,21 +860,7 @@ document.addEventListener("keydown", e => {
     return;
   }
 
-  // ── Delete — quitar unidad del producto seleccionado (vista venta) ──
-  if ((e.key === "Delete" || e.key === "Backspace") && viewVenta && !isInlineEdit) {
-    // Solo si el buscador NO tiene texto seleccionado o el foco no está en él
-    if (document.activeElement !== input || input?.selectionStart === input?.selectionEnd) {
-      if (filaSeleccionada >= 0 && prodFiltered?.length) {
-        const p = prodFiltered[filaSeleccionada];
-        if (p && cart[p._id]) {
-          e.preventDefault();
-          removeFromCartByFila();
-          resaltarFila();
-          return;
-        }
-      }
-    }
-  }
+  // Delete/Backspace — solo funcionan nativamente en el buscador (borrar caracteres)
 
   // ── ESCAPE — cerrar modales ──
   if (e.key === "Escape") {
@@ -926,28 +912,11 @@ document.addEventListener("keydown", e => {
       }
       if (e.key === "Enter") {
         e.preventDefault();
-        if (filaSeleccionada >= 0 && prodFiltered?.length && filaSeleccionada < prodFiltered.length) {
-          addToCart(prodFiltered[filaSeleccionada]);
-          resaltarFila();
-        } else if (prodFiltered?.length >= 1) {
-          // Si no hay fila seleccionada, agregar el primero
-          filaSeleccionada = 0;
-          addToCart(prodFiltered[0]);
-          resaltarFila();
+        const idx = filaSeleccionada >= 0 && filaSeleccionada < (prodFiltered?.length || 0)
+          ? filaSeleccionada : 0;
+        if (prodFiltered?.length) {
+          addToCart(prodFiltered[idx]);
         }
-        return;
-      }
-      if (e.key === "ArrowRight" && e.ctrlKey) {
-        e.preventDefault();
-        if (filaSeleccionada >= 0 && prodFiltered?.length && filaSeleccionada < prodFiltered.length) {
-          addToCart(prodFiltered[filaSeleccionada]);
-          resaltarFila();
-        }
-        return;
-      }
-      if (e.key === "ArrowLeft" && e.ctrlKey) {
-        e.preventDefault();
-        if (prodFiltered?.length) { removeFromCartByFila(); resaltarFila(); }
         return;
       }
       return;
@@ -1431,9 +1400,9 @@ function renderModalVenta() {
       return `<div style="display:flex;align-items:center;padding:8px 12px;${border}gap:8px;font-size:13px">
         <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">${p.desc}</span>
         <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
-          <button class="qty-btn" data-action="minus" data-key="${k}" style="width:22px;height:22px">-</button>
+          <button type="button" class="qty-btn" data-action="minus" data-key="${k}" style="width:22px;height:22px">-</button>
           <input type="number" data-action="qty" data-key="${k}" value="${qty}" min="0" style="width:36px;font-size:12px;font-weight:500;text-align:center;border:1px solid var(--border);border-radius:4px;padding:2px 4px;font-family:inherit" />
-          <button class="qty-btn" data-action="plus" data-key="${k}" style="width:22px;height:22px">+</button>
+          <button type="button" class="qty-btn" data-action="plus" data-key="${k}" style="width:22px;height:22px">+</button>
         </div>
         <span style="font-weight:600;flex-shrink:0;min-width:64px;text-align:right">${fmtDec(sub)}</span>
       </div>`;
