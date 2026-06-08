@@ -897,32 +897,39 @@
         </div>
       </div>
 
-      <!-- Nota de venta -->
-      <div>
-        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">Nota <span style="text-transform:none;font-weight:400;color:var(--text3)">(opcional)</span></div>
-        <div style="display:flex;gap:6px;margin-bottom:7px;flex-wrap:wrap">
-          <button class="nota-chip" data-nota="Fiado">Fiado</button>
-          <button class="nota-chip" data-nota="Pago">Pago</button>
-          <button class="nota-chip" data-nota="Cortesía">Cortesía</button>
+      <!-- Nota de venta — toggle colapsable -->
+      <div style="border:1px solid var(--border2);border-radius:var(--radius-sm);overflow:hidden">
+        <!-- Header del toggle -->
+        <div id="notaToggleHeader" style="padding:8px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
+          <span style="font-size:12.5px;color:var(--text2)">Nota <span style="font-size:11px;color:var(--text3)">(opcional)</span></span>
+          <svg id="notaToggleChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text3);transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
-        <!-- Selector de cliente (visible solo con Fiado o Pago) -->
-        <div id="cobroClienteWrap" style="display:none;margin-bottom:8px;background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--radius-sm);padding:10px 12px">
-          <div style="font-size:12px;font-weight:600;color:var(--danger);margin-bottom:7px;display:flex;align-items:center;gap:5px">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Cliente
+        <!-- Contenido colapsable -->
+        <div id="notaToggleBody" style="display:none;border-top:1px solid var(--border2);padding:10px 12px;display:none;flex-direction:column;gap:9px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button class="nota-chip" data-nota="Fiado">Fiado</button>
+            <button class="nota-chip" data-nota="Pago">Pago</button>
+            <button class="nota-chip" data-nota="Cortesía">Cortesía</button>
           </div>
-          <div style="display:flex;gap:7px;margin-bottom:6px">
-            <select id="cobroClienteSelect" class="form-select" style="flex:1;font-size:12.5px">
-              <option value="">Seleccioná un cliente…</option>
-            </select>
-            <button class="btn-secondary" id="btnCobroNuevoCliente" style="font-size:11px;padding:5px 9px;white-space:nowrap">+ Nuevo</button>
+          <!-- Selector de cliente (visible solo con Fiado o Pago) -->
+          <div id="cobroClienteWrap" style="display:none;background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--radius-sm);padding:10px 12px">
+            <div style="font-size:12px;font-weight:600;color:var(--danger);margin-bottom:7px;display:flex;align-items:center;gap:5px">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+              Cliente
+            </div>
+            <div style="display:flex;gap:7px;margin-bottom:6px">
+              <select id="cobroClienteSelect" class="form-select" style="flex:1;font-size:12.5px">
+                <option value="">Seleccioná un cliente…</option>
+              </select>
+              <button class="btn-secondary" id="btnCobroNuevoCliente" style="font-size:11px;padding:5px 9px;white-space:nowrap">+ Nuevo</button>
+            </div>
+            <div id="cobroClienteDeuda" style="font-size:11px;color:var(--danger);display:none">
+              Deuda actual: <span id="cobroClienteDeudaMonto"></span>
+            </div>
           </div>
-          <div id="cobroClienteDeuda" style="font-size:11px;color:var(--danger);display:none">
-            Deuda actual: <span id="cobroClienteDeudaMonto"></span>
-          </div>
+          <input type="text" id="notaVentaInput" placeholder="O escribí una nota personalizada…" maxlength="100"
+            style="width:100%;font-size:12px;padding:7px 10px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface);font-family:inherit;outline:none;color:var(--text);box-sizing:border-box" />
         </div>
-        <input type="text" id="notaVentaInput" placeholder="O escribí una nota personalizada…" maxlength="100"
-          style="width:100%;font-size:12px;padding:7px 10px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface);font-family:inherit;outline:none;color:var(--text)" />
       </div>
     </div>
     <div class="modal-footer" style="justify-content:space-between">
