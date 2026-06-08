@@ -137,75 +137,81 @@
     <!-- ══════════════════════════════
          VISTA: VENTA
     ══════════════════════════════ -->
-    <div class="view active" id="view-venta" style="padding:0;flex-direction:column">
+    <div class="view active" id="view-venta" style="padding:0;flex-direction:row;overflow:hidden">
 
-      <!-- Barra de búsqueda -->
-      <div class="search-bar" style="padding:10px 14px;border-bottom:1px solid var(--border);background:var(--surface)">
-        <div class="search-wrap" id="searchWrap" style="flex:1">
-          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-          <input type="text" class="search-input" id="searchInput" placeholder="Buscar por nombre, código o escanear…" />
+      <!-- Panel izquierdo: búsqueda + resultados -->
+      <div style="flex:1;display:flex;flex-direction:column;min-width:0;border-right:1px solid var(--border)">
+
+        <!-- Barra de búsqueda -->
+        <div style="padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface);display:flex;align-items:center;gap:10px;flex-shrink:0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text3);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" class="search-input" id="searchInput" placeholder="Buscar por nombre o escanear código…"
+            style="border:none;outline:none;font-size:15px;background:transparent;flex:1;color:var(--text);font-family:inherit" />
+          <button id="btnLimpiarBusqueda" style="display:none;background:none;border:none;cursor:pointer;padding:4px;color:var(--text3)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+          <span class="scan-badge" id="scanBadge" style="flex-shrink:0">
+            <span class="scan-dot"></span>
+            <span id="scanText">Listo</span>
+          </span>
         </div>
-        <span class="scan-badge" id="scanBadge">
-          <span class="scan-dot"></span>
-          <span id="scanText">Listo</span>
-        </span>
-      </div>
 
-      <!-- Filtros proveedor -->
-      <div class="filter-bar" id="filterBar" style="background:var(--surface);border-bottom:1px solid var(--border)"></div>
-
-      <!-- Tabla productos -->
-      <div class="table-wrap" id="tableWrap" style="flex:1;background:var(--surface)">
-        <table>
-          <colgroup>
-            <col style="width:28px">
-            <col style="width:140px">
-            <col style="width:44px">
-            <col style="width:100px">
-            <col style="min-width:140px">
-            <col style="width:82px">
-            <col style="width:76px">
-            <col style="width:60px">
-          </colgroup>
-          <thead>
-            <tr>
-              <th></th>
-              <th>Proveedor</th>
-              <th>ID</th>
-              <th>Código</th>
-              <th>Producto</th>
-              <th class="num">P. Venta</th>
-              <th class="num">P. Lista</th>
-              <th class="num">Stock</th>
-            </tr>
-          </thead>
-          <tbody id="tableBody"></tbody>
-        </table>
-        <div class="empty-row" id="emptyMsg" style="display:none">No se encontraron productos.</div>
-        <div id="pagination" style="display:flex;align-items:center;gap:8px;justify-content:center;padding:.7rem 0;background:var(--surface);border-top:1px solid var(--border)"></div>
-      </div>
-
-      <!-- Barra inferior cobrar -->
-      <div id="cobrarBar" style="display:none;border-top:1px solid var(--border);background:var(--surface);padding:10px 16px;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0">
-        <div style="display:flex;align-items:center;gap:16px">
-          <div>
-            <div style="font-size:11px;color:var(--text3);margin-bottom:2px" id="cobrarItems">0 ítems</div>
-            <div style="font-size:20px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text)" id="cobrarTotal">$0</div>
+        <!-- Resultados / estado vacío -->
+        <div id="ventaResultados" style="flex:1;overflow-y:auto;background:var(--surface)">
+          <!-- Estado vacío -->
+          <div id="ventaEstadoVacio" style="height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:var(--text3);padding:2rem">
+            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" style="opacity:.25"><rect x="2" y="3" width="7" height="18" rx="1"/><rect x="9" y="3" width="7" height="18" rx="1"/><rect x="16" y="3" width="7" height="18" rx="1"/><line x1="6" y1="7" x2="6" y2="7"/><line x1="13" y1="7" x2="13" y2="7"/></svg>
+            <div style="font-size:14px;text-align:center">Escaneá un código o escribí el nombre del producto</div>
           </div>
-          <div id="cobrarHint" style="display:none;font-size:12px;font-weight:500;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 10px;white-space:nowrap"></div>
+          <!-- Lista de resultados -->
+          <div id="ventaListaResultados" style="display:none"></div>
         </div>
-        <button class="btn-primary" id="btnConfirmarVenta" style="padding:10px 28px;font-size:14px;white-space:nowrap">
-          Cobrar
-        </button>
       </div>
 
-      <!-- Elementos ocultos para compatibilidad con renderCart -->
+      <!-- Panel derecho: carrito -->
+      <div style="width:280px;display:flex;flex-direction:column;background:var(--surface);flex-shrink:0">
+
+        <div style="padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+          <div style="font-size:13px;font-weight:600;color:var(--text1)">Carrito</div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span id="ventaCartCount" style="font-size:12px;color:var(--text3)"></span>
+            <button id="btnVaciarCarrito" style="display:none;background:none;border:none;cursor:pointer;font-size:11.5px;color:var(--danger);padding:2px 6px;border-radius:var(--radius-sm)">Vaciar</button>
+          </div>
+        </div>
+
+        <!-- Items del carrito -->
+        <div id="ventaCartLista" style="flex:1;overflow-y:auto">
+          <div id="ventaCartVacio" style="height:100%;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--text3);padding:1rem;text-align:center">
+            Sin productos agregados
+          </div>
+        </div>
+
+        <!-- Total y botón cobrar -->
+        <div style="border-top:1px solid var(--border);padding:12px 14px;flex-shrink:0">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <span style="font-size:13px;color:var(--text2)">Total</span>
+            <span id="ventaCartTotal" style="font-size:22px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text)">$0</span>
+          </div>
+          <button id="btnConfirmarVenta" style="width:100%;padding:12px;font-size:15px;font-weight:600;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);cursor:pointer;font-family:inherit">
+            Cobrar · <span id="ventaBtnTotal">$0</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Elementos ocultos para compatibilidad -->
       <span id="cartCount"       style="display:none">0 ítems</span>
       <span id="cartSubtotal"    style="display:none">$0</span>
       <span id="cartTotal"       style="display:none">$0</span>
       <div  id="cartDescuentoRow" style="display:none"><span id="cartDescuentoLabel"></span><span id="cartDescuentoMonto"></span></div>
       <div  id="cartItems"       style="display:none"></div>
       <div  id="cartEmpty"       style="display:none"></div>
+      <div  id="cobrarBar"       style="display:none">
+        <span id="cobrarItems"></span>
+        <span id="cobrarTotal"></span>
+        <div id="cobrarHint"></div>
+      </div>
+      <div id="tableWrap" style="display:none"><table><tbody id="tableBody"></tbody></table><div id="emptyMsg"></div><div id="pagination"></div></div>
+      <div id="filterBar" style="display:none"></div>
 
     </div>
 
@@ -853,7 +859,7 @@
      MODAL: CONFIRMAR VENTA
 ══════════════════════════════ -->
 <div class="modal-overlay hidden" id="modalVenta">
-  <div class="modal" style="max-width:480px">
+  <div class="modal" style="max-width:580px">
     <div class="modal-header">
       <span class="modal-title">Confirmar venta</span>
       <button class="modal-close" id="closeModalVenta">✕</button>
@@ -881,19 +887,19 @@
         <div id="modalDescuentoRow" style="display:none;justify-content:space-between;font-size:13px;color:var(--danger);margin-bottom:4px">
           <span id="modalDescuentoLabel">Descuento</span><span id="modalDescuentoMonto"></span>
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:17px;font-weight:600;padding-top:8px;border-top:1px solid var(--border)">
-          <span>Total</span><span id="modalTotal" style="font-family:'DM Mono',monospace">$0</span>
+        <div style="display:flex;justify-content:space-between;font-size:14px;font-weight:600;padding-top:10px;border-top:1px solid var(--border);align-items:center">
+          <span>Total</span><span id="modalTotal" style="font-family:'DM Mono',monospace;font-size:26px">$0</span>
         </div>
       </div>
 
       <!-- Métodos de pago -->
-      <div style="margin-bottom:12px">
-        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">Método de pago</div>
-        <div style="display:flex;gap:6px" id="pagoGrid">
-          <button class="pago-chip selected-efectivo" data-metodo="efectivo">Efectivo</button>
-          <button class="pago-chip" data-metodo="mp">Mercado Pago</button>
-          <button class="pago-chip" data-metodo="debito">Débito</button>
-          <button class="pago-chip" data-metodo="credito">Crédito</button>
+      <div style="margin-bottom:14px">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:9px">Método de pago</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px" id="pagoGrid">
+          <button class="pago-chip selected-efectivo" data-metodo="efectivo" style="padding:10px 8px;font-size:14px;text-align:center">Efectivo</button>
+          <button class="pago-chip" data-metodo="mp" style="padding:10px 8px;font-size:14px;text-align:center">Mercado Pago</button>
+          <button class="pago-chip" data-metodo="debito" style="padding:10px 8px;font-size:14px;text-align:center">Débito</button>
+          <button class="pago-chip" data-metodo="credito" style="padding:10px 8px;font-size:14px;text-align:center">Crédito</button>
         </div>
       </div>
 
@@ -901,7 +907,7 @@
       <div style="border:1px solid var(--border2);border-radius:var(--radius-sm);overflow:hidden">
         <!-- Header del toggle -->
         <div id="notaToggleHeader" style="padding:8px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
-          <span style="font-size:12.5px;color:var(--text2)">Nota <span style="font-size:11px;color:var(--text3)">(opcional)</span></span>
+          <span style="font-size:14px;color:var(--text2)">Nota <span style="font-size:12px;color:var(--text3)">(opcional)</span></span>
           <svg id="notaToggleChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text3);transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
         <!-- Contenido colapsable -->
@@ -933,10 +939,10 @@
       </div>
     </div>
     <div class="modal-footer" style="justify-content:space-between">
-      <button class="btn-danger" id="btnCancelarVenta">Cancelar</button>
+      <button class="btn-danger" id="btnCancelarVenta" style="font-size:14px;padding:10px 16px">Cancelar</button>
       <div style="display:flex;gap:8px">
-        <button class="btn-secondary" id="btnGuardarTicket">Guardar y Confirmar</button>
-        <button class="btn-primary" id="btnConfirmarVentaFinal">Confirmar</button>
+        <button class="btn-secondary" id="btnGuardarTicket" style="font-size:14px;padding:10px 16px">Guardar y Confirmar</button>
+        <button class="btn-primary" id="btnConfirmarVentaFinal" style="font-size:14px;padding:10px 20px">Confirmar</button>
       </div>
     </div>
   </div>
