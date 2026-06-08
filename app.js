@@ -3068,8 +3068,6 @@ function renderPrecios() {
 
 document.getElementById("preciosFilterProv")?.addEventListener("change", renderPrecios);
 
-document.getElementById("btnImprimirListaPrecios")?.addEventListener("click", () => window.print());
-
 document.getElementById("btnExportarPrecios")?.addEventListener("click", () => {
   const filtro = document.getElementById("preciosFilterProv").value;
   const lista  = allProducts
@@ -3150,17 +3148,93 @@ document.getElementById("btnExpCaja")?.addEventListener("click", () => {
 });
 
 document.getElementById("btnExportarListaExcel")?.addEventListener("click", () => {
-  const data = [["Proveedor","ID","Codigo","Producto","P. Lista","Ganancia %","P. Venta","Stock"]];
+  if (!allProducts.length) { showToast("No hay productos cargados.", "warning"); return; }
+
+  const porProv = {};
   allProducts
-    .sort((a,b) => (a.proveedor||"").localeCompare(b.proveedor||"") || (a.desc||"").localeCompare(b.desc||""))
+    .sort((a, b) => (a.desc || "").localeCompare(b.desc || ""))
     .forEach(p => {
-      const venta  = Math.round(getPrecioVenta(p));
-      const ganPct = gananciaMap[p.proveedor] != null ? Math.round(gananciaMap[p.proveedor] * 100) : "";
-      data.push([p.proveedor||"", p.id||"", p.cod||"", p.desc||"", p.lista||0, ganPct, venta, p.stock ?? "—"]);
+      const prov = p.proveedor || "Sin proveedor";
+      if (!porProv[prov]) porProv[prov] = [];
+      porProv[prov].push(p);
     });
 
-  if (data.length === 1) { showToast("No hay productos cargados.", "warning"); return; }
-  exportarExcel([{ nombre: "Productos", data, colsMoney: [4, 6] }], `JPSoft_Tienda_Productos_${todayKey()}.xlsx`);
+  const hojas = Object.entries(porProv)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([prov, prods]) => {
+      const data = [["ID", "CODIGO", "PRODUCTO", "P. LISTA"]];
+      prods.forEach((p, i) => {
+        data.push([
+          String(i + 1).padStart(3, "0"),
+          p.cod || "",
+          p.desc || "",
+          p.lista || 0
+        ]);
+      });
+      const nombre = prov.replace(/[:\\\/?*\[\]]/g, "").substring(0, 31);
+      return { nombre, data, colsMoney: [3] };
+    });
+
+  exportarExcel(hojas, `JPSoft_Tienda_Productos_${todayKey()}.xlsx`);
+});
+
+document.getElementById("btnImprimirListaPrecios")?.addEventListener("click", () => {
+  if (!allProducts.length) { showToast("No hay productos cargados.", "warning"); return; }
+
+  const porProv = {};
+  allProducts
+    .sort((a, b) => (a.desc || "").localeCompare(b.desc || ""))
+    .forEach(p => {
+      const prov = p.proveedor || "Sin proveedor";
+      if (!porProv[prov]) porProv[prov] = [];
+      porProv[prov].push(p);
+    });
+
+  const now = new Date().toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const totalProds = allProducts.length;
+  const totalProvs = Object.keys(porProv).length;
+
+  const seccionesHtml = Object.entries(porProv)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([prov, prods]) => {
+      const filas = prods.map(p => {
+        const venta = Math.round(getPrecioVenta(p));
+        return `<tr>
+          <td style="padding:4px 8px;font-size:11px;color:#aaa;font-family:monospace">${p.cod || "—"}</td>
+          <td style="padding:4px 8px;font-size:12px">${p.desc || "—"}</td>
+          <td style="padding:4px 8px;font-size:12px;text-align:right;color:#888">${fmt(p.lista || 0)}</td>
+          <td style="padding:4px 8px;font-size:12px;text-align:right;font-weight:600">${fmt(venta)}</td>
+          <td style="padding:4px 8px;font-size:11px;text-align:right;color:#aaa">${p.stock ?? "—"}</td>
+        </tr>`;
+      }).join("");
+
+      return `
+        <div style="margin-bottom:1.5rem;page-break-inside:avoid">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:#aaa;padding:4px 8px;background:#f8f8f8;border-bottom:1px solid #eee">${prov} <span style="font-weight:400">(${prods.length})</span></div>
+          <table style="width:100%;border-collapse:collapse">
+            <thead>
+              <tr style="font-size:9px;color:#bbb;text-transform:uppercase;letter-spacing:.05em">
+                <th style="padding:4px 8px;text-align:left;font-weight:400;border-bottom:1px solid #eee;width:100px">Código</th>
+                <th style="padding:4px 8px;text-align:left;font-weight:400;border-bottom:1px solid #eee">Producto</th>
+                <th style="padding:4px 8px;text-align:right;font-weight:400;border-bottom:1px solid #eee;width:80px">P. Lista</th>
+                <th style="padding:4px 8px;text-align:right;font-weight:400;border-bottom:1px solid #eee;width:80px">P. Venta</th>
+                <th style="padding:4px 8px;text-align:right;font-weight:400;border-bottom:1px solid #eee;width:60px">Stock</th>
+              </tr>
+            </thead>
+            <tbody>${filas}</tbody>
+          </table>
+        </div>`;
+    }).join("");
+
+  const printArea = document.getElementById("printArea");
+  printArea.innerHTML = `
+    <div class="print-brand">JPSoft | Tienda</div>
+    <div class="print-sub">Lista de precios — ${now} · ${totalProds} productos · ${totalProvs} proveedores</div>
+    ${seccionesHtml}
+    <div class="print-footer">JPSoft | Tienda · ${now}</div>`;
+
+  window.print();
+  setTimeout(() => { printArea.innerHTML = ""; }, 1000);
 });
 
 // ── Helper exportar Excel ──
