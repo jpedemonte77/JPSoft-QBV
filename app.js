@@ -916,6 +916,9 @@ document.addEventListener("keydown", e => {
           ? filaSeleccionada : 0;
         if (prodFiltered?.length) {
           addToCart(prodFiltered[idx]);
+          // Blur momentáneo para que Enter no siga disparando
+          input.blur();
+          setTimeout(() => input.focus(), 50);
         }
         return;
       }
