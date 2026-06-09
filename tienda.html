@@ -692,6 +692,10 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
             Ventas
           </button>
+          <button id="histTabGastos" class="hist-tab" data-tab="gastos">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/></svg>
+            Gastos
+          </button>
         </div>
 
         <!-- Filtro período (solo visible en pestaña Ventas) -->
@@ -754,6 +758,32 @@
             </thead>
             <tbody id="histVentasBody">
               <tr><td colspan="6" class="empty-row">Seleccioná un período para ver las ventas.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- Tabla Gastos -->
+        <div id="histPanelGastos" style="display:none">
+          <table>
+            <colgroup>
+              <col style="width:110px">
+              <col style="width:100px">
+              <col style="width:130px">
+              <col>
+              <col style="width:110px">
+              <col style="width:100px">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Categoría</th>
+                <th>Descripción</th>
+                <th class="num">Monto</th>
+                <th>Usuario</th>
+              </tr>
+            </thead>
+            <tbody id="histGastosBody">
+              <tr><td colspan="6" class="empty-row">Seleccioná un período para ver los gastos.</td></tr>
             </tbody>
           </table>
         </div>
