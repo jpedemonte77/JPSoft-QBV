@@ -3748,21 +3748,23 @@ let histPeriodoActivo = "7";
 
 function switchHistTab(tab) {
   histTabActiva = tab;
-  ["precios","ventas","gastos","anulaciones"].forEach(t => {
+  ["precios","ventas","gastos","anulaciones","descuentos"].forEach(t => {
     document.getElementById(`histTab${t.charAt(0).toUpperCase()+t.slice(1)}`)?.classList.toggle("active", t === tab);
     document.getElementById(`histPanel${t.charAt(0).toUpperCase()+t.slice(1)}`).style.display = t === tab ? "block" : "none";
   });
   const pw = document.getElementById("histVentasPeriodoWrap");
-  if (pw) pw.style.display = ["ventas","gastos","anulaciones"].includes(tab) ? "flex" : "none";
+  if (pw) pw.style.display = ["ventas","gastos","anulaciones","descuentos"].includes(tab) ? "flex" : "none";
   if (tab === "ventas")      renderHistorialVentas();
   if (tab === "gastos")      renderHistorialGastos();
   if (tab === "anulaciones") renderHistorialAnulaciones();
+  if (tab === "descuentos")  renderHistorialDescuentos();
 }
 
 document.getElementById("histTabPrecios")?.addEventListener("click",     () => switchHistTab("precios"));
 document.getElementById("histTabVentas")?.addEventListener("click",      () => switchHistTab("ventas"));
 document.getElementById("histTabGastos")?.addEventListener("click",      () => switchHistTab("gastos"));
 document.getElementById("histTabAnulaciones")?.addEventListener("click", () => switchHistTab("anulaciones"));
+document.getElementById("histTabDescuentos")?.addEventListener("click",  () => switchHistTab("descuentos"));
 
 document.querySelectorAll(".hist-periodo").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -3772,6 +3774,7 @@ document.querySelectorAll(".hist-periodo").forEach(btn => {
     if (histTabActiva === "ventas")      renderHistorialVentas();
     if (histTabActiva === "gastos")      renderHistorialGastos();
     if (histTabActiva === "anulaciones") renderHistorialAnulaciones();
+    if (histTabActiva === "descuentos")  renderHistorialDescuentos();
   });
 });
 
@@ -3977,6 +3980,62 @@ function renderHistorialAnulaciones() {
     </tr>`;
   }).join("");
 }
+
+// ── Render historial de descuentos ──
+function renderHistorialDescuentos() {
+  const tbody = document.getElementById("histDescuentosBody");
+  if (!tbody) return;
+
+  const hoy = new Date();
+  let desde;
+  if (histPeriodoActivo === "7")        { desde = new Date(hoy); desde.setDate(hoy.getDate() - 6); }
+  else if (histPeriodoActivo === "30")  { desde = new Date(hoy); desde.setDate(hoy.getDate() - 29); }
+  else if (histPeriodoActivo === "mes") { desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1); }
+  else                                  { desde = new Date(hoy.getFullYear(), 0, 1); }
+  const desdeKey = desde.toISOString().slice(0, 10);
+  const hoyKey   = hoy.toISOString().slice(0, 10);
+
+  // Recolectar ventas con descuento > 0 desde cajaData
+  const lista = [];
+  Object.entries(cajaData).forEach(([fecha, diaData]) => {
+    if (fecha < desdeKey || fecha > hoyKey) return;
+    ["manana", "tarde"].forEach(turno => {
+      const ventas = diaData[turno]?.ventas || {};
+      Object.values(ventas).forEach(v => {
+        if (!v.descuento || v.descuento <= 0) return;
+        lista.push({ ...v, fecha });
+      });
+    });
+  });
+
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-row">No hay ventas con descuento en el período seleccionado.</td></tr>`;
+    return;
+  }
+
+  lista.sort((a, b) => {
+    const fa = `${a.fecha} ${a.hora || ""}`;
+    const fb = `${b.fecha} ${b.hora || ""}`;
+    return fb.localeCompare(fa);
+  });
+
+  tbody.innerHTML = lista.map(v => {
+    const [fy, fm, fd] = (v.fecha || "").split("-");
+    const fechaFmt  = v.fecha ? `${parseInt(fd)}/${parseInt(fm)}/${fy}` : "—";
+    const productos = (v.items || []).map(i => `${i.desc}${i.qty > 1 ? ` ×${i.qty}` : ""}`).join(", ") || "—";
+    const pct       = v.subtotal ? Math.round((v.descuento / v.subtotal) * 100) : 0;
+    return `<tr>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)">${fechaFmt}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)">${v.hora || "—"}</td>
+      <td style="font-size:13px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${productos}">${productos}</td>
+      <td class="num" style="color:var(--text3)">${fmt(v.subtotal || 0)}</td>
+      <td class="num" style="color:var(--danger);font-weight:600">-${fmt(v.descuento)} <span style="font-size:10px">(${pct}%)</span></td>
+      <td class="num" style="font-weight:600">${fmt(v.total || 0)}</td>
+      <td style="font-size:12px;color:var(--text2)">${v.admin || "—"}</td>
+    </tr>`;
+  }).join("");
+}
+
 document.getElementById("actFiltroUsuario")?.addEventListener("change", renderActividad);
 
 // ============================================================
