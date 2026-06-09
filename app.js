@@ -435,6 +435,69 @@ function initFirebase() {
   // Clientes
   initClientesListener();
 
+  // ── Listeners de Actividad ──
+  function actualizarBtnElimAct() {
+    const btnElim = document.getElementById("btnEliminarActSelec");
+    const cntEl   = document.getElementById("actSelecCount");
+    if (btnElim) btnElim.style.display = actSeleccionadas.size ? "flex" : "none";
+    if (cntEl)   cntEl.textContent = actSeleccionadas.size;
+  }
+
+  // Casilla individual
+  document.getElementById("actLogWrap")?.addEventListener("change", e => {
+    const cb = e.target.closest(".act-check");
+    if (!cb) return;
+    if (cb.checked) actSeleccionadas.add(cb.dataset.id);
+    else actSeleccionadas.delete(cb.dataset.id);
+    actualizarBtnElimAct();
+    // Sincronizar casilla "todas"
+    const total = document.querySelectorAll(".act-check").length;
+    const chkAll = document.getElementById("actCheckAll");
+    if (chkAll) chkAll.checked = actSeleccionadas.size === total && total > 0;
+  });
+
+  // Casilla "seleccionar todas"
+  document.getElementById("actCheckAll")?.addEventListener("change", e => {
+    const checks = document.querySelectorAll(".act-check");
+    checks.forEach(cb => {
+      if (e.target.checked) actSeleccionadas.add(cb.dataset.id);
+      else actSeleccionadas.delete(cb.dataset.id);
+      cb.checked = e.target.checked;
+    });
+    actualizarBtnElimAct();
+  });
+
+  // Papelera individual
+  document.getElementById("actLogWrap")?.addEventListener("click", async e => {
+    const btn = e.target.closest(".act-del-btn");
+    if (!btn) return;
+    const id = btn.dataset.id;
+    if (!confirm("¿Eliminar este registro de actividad?")) return;
+    try {
+      await deleteDoc(doc(db, "actividad", id));
+      actSeleccionadas.delete(id);
+      showToast("Registro eliminado ✓", "success");
+    } catch(err) {
+      showToast("Error al eliminar: " + err.message, "error");
+    }
+  });
+
+  // Eliminar seleccionadas
+  document.getElementById("btnEliminarActSelec")?.addEventListener("click", async () => {
+    if (!actSeleccionadas.size) return;
+    if (!confirm(`¿Eliminar ${actSeleccionadas.size} registro${actSeleccionadas.size > 1 ? "s" : ""} de actividad?\n\nEsta acción no se puede deshacer.`)) return;
+    try {
+      const batch = writeBatch(db);
+      actSeleccionadas.forEach(id => batch.delete(doc(db, "actividad", id)));
+      await batch.commit();
+      actSeleccionadas.clear();
+      document.getElementById("actCheckAll").checked = false;
+      showToast("Registros eliminados ✓", "success");
+    } catch(err) {
+      showToast("Error al eliminar: " + err.message, "error");
+    }
+  });
+
   // Config márgenes
   _unsubs.push(onSnapshot(doc(db, "config", "margenes"), snap => {
     if (snap.exists()) Object.assign(margenesConfig, snap.data());
@@ -604,38 +667,7 @@ function renderActividad() {
   }
 }
 
-// ── Delegación de eventos en el log de actividad ──
-document.getElementById("actLogWrap")?.addEventListener("change", e => {
-  const cb = e.target.closest(".act-check");
-  if (!cb) return;
-  const id = cb.dataset.id;
-  if (cb.checked) actSeleccionadas.add(id);
-  else actSeleccionadas.delete(id);
-  const btnElim = document.getElementById("btnEliminarActSelec");
-  const cntEl   = document.getElementById("actSelecCount");
-  if (btnElim) btnElim.style.display = actSeleccionadas.size ? "flex" : "none";
-  if (cntEl)   cntEl.textContent = actSeleccionadas.size;
-});
-
-document.getElementById("actLogWrap")?.addEventListener("click", async e => {
-  const btn = e.target.closest(".act-del-btn");
-  if (!btn) return;
-  const id = btn.dataset.id;
-  if (!confirm("¿Eliminar este registro de actividad?")) return;
-  await deleteDoc(doc(db, "actividad", id));
-  actSeleccionadas.delete(id);
-  showToast("Registro eliminado ✓", "success");
-});
-
-document.getElementById("btnEliminarActSelec")?.addEventListener("click", async () => {
-  if (!actSeleccionadas.size) return;
-  if (!confirm(`¿Eliminar ${actSeleccionadas.size} registro${actSeleccionadas.size > 1 ? "s" : ""} de actividad?\n\nEsta acción no se puede deshacer.`)) return;
-  const batch = writeBatch(db);
-  actSeleccionadas.forEach(id => batch.delete(doc(db, "actividad", id)));
-  await batch.commit();
-  actSeleccionadas.clear();
-  showToast("Registros eliminados ✓", "success");
-});
+// ── Listeners de Actividad se inicializan en initFirebase ──
 // ── Modo nocturno ──
 (function() {
   const DARK_KEY = "jpsoft_dark_mode";
