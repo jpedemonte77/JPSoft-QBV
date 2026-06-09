@@ -59,6 +59,10 @@
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/><line x1="5" y1="5" x2="5" y2="3"/><line x1="19" y1="19" x2="19" y2="21"/></svg>
         Gastos
       </button>
+      <button class="nav-item" data-view="compras">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+        Compras
+      </button>
       <button class="nav-item" data-view="clientes">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         Clientes
@@ -319,12 +323,8 @@
           <div class="stat-card-value" id="gStatRetiro">$0</div>
         </div>
         <div class="stat-card">
-          <div class="stat-card-label">Pago proveedor</div>
-          <div class="stat-card-value" id="gStatPagoProv">$0</div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-card-label">Insumos</div>
-          <div class="stat-card-value" id="gStatInsumos">$0</div>
+          <div class="stat-card-label">Pago de servicio</div>
+          <div class="stat-card-value" id="gStatPagoServ">$0</div>
         </div>
         <div class="stat-card">
           <div class="stat-card-label">Otro</div>
@@ -356,6 +356,61 @@
           <tbody id="gastosTableBody"></tbody>
         </table>
         <div class="empty-row" id="gastosEmptyMsg" style="display:none">No hay gastos registrados para este día.</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
+         VISTA: COMPRAS
+    ══════════════════════════════ -->
+    <div class="view" id="view-compras">
+      <div class="view-header">
+        <div></div>
+        <button class="btn-primary" id="btnNuevaCompra">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Registrar compra
+        </button>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-grid" id="comprasStatsWrap" style="margin-bottom:1rem">
+        <div class="stat-card">
+          <div class="stat-card-label">Total del mes</div>
+          <div class="stat-card-value" id="cmpStatTotal">$0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Compras este mes</div>
+          <div class="stat-card-value" id="cmpStatCant">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Último proveedor</div>
+          <div class="stat-card-value" style="font-size:15px" id="cmpStatProv">—</div>
+        </div>
+      </div>
+
+      <!-- Tabla compras -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+        <table>
+          <colgroup>
+            <col style="width:110px">
+            <col style="width:80px">
+            <col style="width:180px">
+            <col>
+            <col style="width:110px">
+            <col style="width:100px">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Hora</th>
+              <th>Proveedor</th>
+              <th>Productos</th>
+              <th class="num">Total</th>
+              <th>Usuario</th>
+            </tr>
+          </thead>
+          <tbody id="comprasTableBody"></tbody>
+        </table>
+        <div class="empty-row" id="comprasEmptyMsg">No hay compras registradas.</div>
       </div>
     </div>
 
@@ -977,6 +1032,7 @@
             <option value="caja">Caja</option>
             <option value="gasto">Gastos</option>
             <option value="cliente">Clientes</option>
+            <option value="compra">Compras</option>
             <option value="backup">Backup</option>
           </select>
           <select class="form-select" id="actFiltroUsuario" style="width:140px">
@@ -1266,8 +1322,7 @@
       <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">Categoría</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="gastoChips">
         <button class="gasto-chip active" data-cat="Retiro">Retiro</button>
-        <button class="gasto-chip" data-cat="Pago proveedor">Pago proveedor</button>
-        <button class="gasto-chip" data-cat="Insumos">Insumos</button>
+        <button class="gasto-chip" data-cat="Pago de servicio">Pago de servicio</button>
         <button class="gasto-chip" data-cat="Otro">Otro</button>
       </div>
       <!-- Descripción -->
@@ -1358,6 +1413,53 @@
     <div class="modal-footer">
       <button class="btn-secondary" id="btnCancelarCobrar">Cancelar</button>
       <button class="btn-primary" id="btnConfirmarCobrar">Confirmar pago</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     MODAL: NUEVA COMPRA
+══════════════════════════════ -->
+<div class="modal-overlay hidden" id="modalCompra">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-header">
+      <span class="modal-title">Registrar compra</span>
+      <button class="modal-close" id="closeModalCompra">✕</button>
+    </div>
+    <div class="modal-body">
+      <!-- Proveedor -->
+      <div class="form-group">
+        <label class="form-label">Proveedor</label>
+        <select class="form-select" id="compraProvSelect" style="width:100%">
+          <option value="">Seleccioná un proveedor…</option>
+        </select>
+      </div>
+
+      <!-- Items de la compra -->
+      <div style="margin-top:14px">
+        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Productos comprados</div>
+        <div id="compraItems" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
+        <button type="button" class="btn-secondary" id="btnAgregarItemCompra" style="font-size:12px;width:100%">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Agregar producto
+        </button>
+      </div>
+
+      <!-- Total -->
+      <div style="margin-top:14px;background:var(--surface2);border-radius:var(--radius-sm);padding:10px 13px;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-size:13px;font-weight:500;color:var(--text2)">Total de la compra</div>
+        <div id="compraTotalDisplay" style="font-size:18px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text1)">$0</div>
+      </div>
+
+      <!-- Nota opcional -->
+      <div class="form-group" style="margin-top:10px">
+        <label class="form-label">Nota <span style="font-weight:400;color:var(--text3)">(opcional)</span></label>
+        <input type="text" class="form-input" id="compraNotaInput" placeholder="Ej: Pedido semanal" maxlength="100" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" id="btnCancelarCompra">Cancelar</button>
+      <button class="btn-primary" id="btnConfirmarCompra">Registrar compra</button>
     </div>
   </div>
 </div>
