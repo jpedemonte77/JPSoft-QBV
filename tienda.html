@@ -696,6 +696,10 @@
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2z"/><path d="M12 8v4l3 3"/></svg>
             Gastos
           </button>
+          <button id="histTabAnulaciones" class="hist-tab" data-tab="anulaciones">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+            Anulaciones
+          </button>
         </div>
 
         <!-- Filtro período (solo visible en pestaña Ventas) -->
@@ -784,6 +788,32 @@
             </thead>
             <tbody id="histGastosBody">
               <tr><td colspan="6" class="empty-row">Seleccioná un período para ver los gastos.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- Tabla Anulaciones -->
+        <div id="histPanelAnulaciones" style="display:none">
+          <table>
+            <colgroup>
+              <col style="width:110px">
+              <col style="width:80px">
+              <col>
+              <col style="width:110px">
+              <col style="width:100px">
+              <col style="width:100px">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Productos</th>
+                <th class="num">Total</th>
+                <th>Método</th>
+                <th>Usuario</th>
+              </tr>
+            </thead>
+            <tbody id="histAnulacionesBody">
+              <tr><td colspan="6" class="empty-row">Seleccioná un período para ver las anulaciones.</td></tr>
             </tbody>
           </table>
         </div>
