@@ -441,6 +441,9 @@ function initFirebase() {
     if (histTabActiva === "anulaciones") renderHistorialAnulaciones();
   }));
 
+  // Compras
+  initComprasListener();
+
   // Config márgenes
   _unsubs.push(onSnapshot(doc(db, "config", "margenes"), snap => {
     if (snap.exists()) Object.assign(margenesConfig, snap.data());
@@ -480,7 +483,7 @@ function rebuildGananciaMap() {
 // ============================================================
 //  NAVEGACIÓN
 // ============================================================
-const VIEWS = { venta: "Venta", caja: "Caja", gastos: "Gastos", clientes: "Clientes", productos: "Productos", proveedores: "Proveedores", reportes: "Reportes", "historial-precios": "Historial", actividad: "Actividad", soporte: "Soporte", backup: "Backup" };
+const VIEWS = { venta: "Venta", caja: "Caja", gastos: "Gastos", compras: "Compras", clientes: "Clientes", productos: "Productos", proveedores: "Proveedores", reportes: "Reportes", "historial-precios": "Historial", actividad: "Actividad", soporte: "Soporte", backup: "Backup" };
 
 document.querySelectorAll(".nav-item[data-view]").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -498,6 +501,7 @@ document.querySelectorAll(".nav-item[data-view]").forEach(btn => {
     if (view === "actividad")         renderActividad();
     if (view === "gastos")            renderGastos();
     if (view === "clientes")          renderClientesLista();
+    if (view === "compras")           renderCompras();
   });
 });
 
@@ -547,11 +551,12 @@ function renderActividad() {
     caja:      { cls: "color:#3C3489;background:#EEEDFE", label: "Caja" },
     gasto:     { cls: "color:#7a3a00;background:#fef0e0", label: "Gasto" },
     cliente:   { cls: "color:#185FA5;background:#E6F1FB", label: "Cliente" },
+    compra:    { cls: "color:#0F6E56;background:#E1F5EE", label: "Compra" },
     backup:    { cls: "color:var(--text2);background:var(--surface2)", label: "Backup" },
   };
   const TIPO_DOT = {
     venta: "#1a7a50", anulacion: "#c0391a", precio: "#185fa5",
-    producto: "#92580a", caja: "#7f77dd", gasto: "#c06a00", cliente: "#185FA5", backup: "#888"
+    producto: "#92580a", caja: "#7f77dd", gasto: "#c06a00", cliente: "#185FA5", compra: "#0F6E56", backup: "#888"
   };
 
   function fmtTs(ts) {
@@ -3898,10 +3903,11 @@ function renderHistorialGastos() {
   });
 
   const CAT_STYLE = {
-    "Retiro":         "color:#7a3a00;background:#fef0e0",
-    "Pago proveedor": "color:#0C447C;background:#E6F1FB",
-    "Insumos":        "color:#27500A;background:#EAF3DE",
-    "Otro":           "color:var(--text2);background:var(--surface2)",
+    "Retiro":           "color:#7a3a00;background:#fef0e0",
+    "Pago de servicio": "color:#0C447C;background:#E6F1FB",
+    "Otro":             "color:var(--text2);background:var(--surface2)",
+    "Pago proveedor":   "color:#0C447C;background:#E6F1FB",
+    "Insumos":          "color:#27500A;background:#EAF3DE",
   };
 
   tbody.innerHTML = gastos.map(g => {
@@ -4400,7 +4406,7 @@ function getGastos(fechaKey) {
 
 function calcTotalesGastos(fechaKey) {
   const gastos = Object.entries(getGastos(fechaKey)).map(([id, g]) => ({ ...g, _id: id }));
-  const tots = { Retiro: 0, "Pago proveedor": 0, Insumos: 0, Otro: 0 };
+  const tots = { Retiro: 0, "Pago de servicio": 0, Otro: 0 };
   let total = 0;
   gastos.forEach(g => {
     tots[g.cat] = (tots[g.cat] || 0) + (g.monto || 0);
@@ -4423,8 +4429,7 @@ function renderGastos() {
     document.getElementById("gStatTotal").textContent    = fmt(total);
     document.getElementById("gStatCant").textContent     = gastos.length + (gastos.length === 1 ? " gasto" : " gastos");
     document.getElementById("gStatRetiro").textContent   = fmt(tots["Retiro"] || 0);
-    document.getElementById("gStatPagoProv").textContent = fmt(tots["Pago proveedor"] || 0);
-    document.getElementById("gStatInsumos").textContent  = fmt(tots["Insumos"] || 0);
+    document.getElementById("gStatPagoServ").textContent = fmt(tots["Pago de servicio"] || 0);
     document.getElementById("gStatOtro").textContent     = fmt(tots["Otro"] || 0);
   } else {
     statsWrap.classList.add("hidden");
@@ -4442,10 +4447,11 @@ function renderGastos() {
   empty.style.display = "none";
 
   const CAT_BADGE = {
-    "Retiro":          "color:#7a3a00;background:#fef0e0",
-    "Pago proveedor":  "color:#0C447C;background:#E6F1FB",
-    "Insumos":         "color:#27500A;background:#EAF3DE",
-    "Otro":            "color:var(--text2);background:var(--surface2)",
+    "Retiro":           "color:#7a3a00;background:#fef0e0",
+    "Pago de servicio": "color:#0C447C;background:#E6F1FB",
+    "Otro":             "color:var(--text2);background:var(--surface2)",
+    "Pago proveedor":   "color:#0C447C;background:#E6F1FB",
+    "Insumos":          "color:#27500A;background:#EAF3DE",
   };
 
   const ordenados = [...gastos].sort((a, b) => (b.hora || "").localeCompare(a.hora || ""));
@@ -4729,4 +4735,192 @@ document.getElementById("btnImprimirGastosPDF")?.addEventListener("click", async
     document.body.removeChild(container);
     btn.disabled = false; btn.innerHTML = orig;
   }
+});
+
+// ============================================================
+//  COMPRAS
+// ============================================================
+let comprasData = [];
+let compraItems = []; // items del modal actual
+
+// ── Helpers ──
+function calcTotalCompra() {
+  return compraItems.reduce((s, item) => s + (parseFloat(item.precio) || 0) * (parseInt(item.qty) || 0), 0);
+}
+
+function renderCompraItemsModal() {
+  const wrap = document.getElementById("compraItems");
+  if (!wrap) return;
+  const provId   = document.getElementById("compraProvSelect")?.value;
+  const provProds = allProducts.filter(p => p.proveedor === proveedoresData[provId]?.nombre);
+
+  wrap.innerHTML = compraItems.map((item, i) => `
+    <div style="display:grid;grid-template-columns:1fr 80px 100px 28px;gap:6px;align-items:center">
+      <select class="form-select" data-ci-prod="${i}" style="font-size:12px">
+        <option value="">Seleccioná producto…</option>
+        ${provProds.map(p => `<option value="${p._id}" ${item.prodId === p._id ? "selected" : ""}>${p.desc}</option>`).join("")}
+      </select>
+      <input type="number" class="form-input" data-ci-qty="${i}" value="${item.qty || 1}" min="1"
+        placeholder="Cant." style="font-size:12px;text-align:center" />
+      <input type="number" class="form-input" data-ci-precio="${i}" value="${item.precio || ""}"
+        placeholder="$ costo" style="font-size:12px" />
+      <button type="button" data-ci-del="${i}"
+        style="background:none;border:none;cursor:pointer;color:var(--text3);padding:4px;display:flex;align-items:center">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+          <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+        </svg>
+      </button>
+    </div>`).join("");
+
+  // Total
+  const total = document.getElementById("compraTotalDisplay");
+  if (total) total.textContent = fmt(Math.round(calcTotalCompra()));
+}
+
+// ── Render vista Compras ──
+function renderCompras() {
+  const tbody = document.getElementById("comprasTableBody");
+  const empty = document.getElementById("comprasEmptyMsg");
+  if (!tbody) return;
+
+  // Stats del mes
+  const hoy    = new Date();
+  const mesIni = new Date(hoy.getFullYear(), hoy.getMonth(), 1).toISOString().slice(0,10);
+  const hoyKey = hoy.toISOString().slice(0,10);
+  const delMes = comprasData.filter(c => c.fecha >= mesIni && c.fecha <= hoyKey);
+  const totalMes = delMes.reduce((s, c) => s + (c.total || 0), 0);
+  document.getElementById("cmpStatTotal").textContent = fmt(totalMes);
+  document.getElementById("cmpStatCant").textContent  = delMes.length;
+  const ultimo = [...comprasData].sort((a,b) => b.ts?.localeCompare(a.ts||""))[0];
+  document.getElementById("cmpStatProv").textContent  = ultimo?.proveedor || "—";
+
+  if (!comprasData.length) {
+    tbody.innerHTML = "";
+    empty.style.display = "block";
+    return;
+  }
+  empty.style.display = "none";
+
+  const lista = [...comprasData].sort((a,b) => (b.ts||"").localeCompare(a.ts||""));
+  tbody.innerHTML = lista.map(c => {
+    const [fy,fm,fd] = (c.fecha||"").split("-");
+    const fechaFmt = c.fecha ? `${parseInt(fd)}/${parseInt(fm)}/${fy}` : "—";
+    const hora     = c.ts ? new Date(c.ts).toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}) : "—";
+    const prods    = (c.items||[]).map(i => `${i.desc}${i.qty>1?` ×${i.qty}`:""}`).join(", ") || "—";
+    return `<tr>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)">${fechaFmt}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)">${hora}</td>
+      <td><span class="badge ${badgeClass(c.proveedor)}">${c.proveedor||"—"}</span></td>
+      <td style="font-size:12.5px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${prods}">${prods}</td>
+      <td class="num" style="font-weight:600">${fmt(c.total||0)}</td>
+      <td style="font-size:12px;color:var(--text2)">${c.admin||"—"}</td>
+    </tr>`;
+  }).join("");
+}
+
+// ── Firestore listener ──
+function initComprasListener() {
+  _unsubs.push(onSnapshot(collection(db, "compras"), snap => {
+    comprasData = snap.docs.map(d => ({ ...d.data(), _id: d.id }));
+    if (document.getElementById("view-compras")?.classList.contains("active")) renderCompras();
+  }));
+}
+
+// ── Modal nueva compra ──
+function abrirModalCompra() {
+  compraItems = [{ prodId: "", qty: 1, precio: "", desc: "" }];
+  document.getElementById("compraNotaInput").value = "";
+  // Popular select de proveedores
+  const sel = document.getElementById("compraProvSelect");
+  sel.innerHTML = '<option value="">Seleccioná un proveedor…</option>';
+  Object.entries(proveedoresData).forEach(([id, p]) => {
+    const opt = document.createElement("option");
+    opt.value = id; opt.textContent = p.nombre;
+    sel.appendChild(opt);
+  });
+  renderCompraItemsModal();
+  document.getElementById("modalCompra").classList.remove("hidden");
+}
+
+function cerrarModalCompra() {
+  document.getElementById("modalCompra").classList.add("hidden");
+  compraItems = [];
+}
+
+document.getElementById("btnNuevaCompra")?.addEventListener("click", abrirModalCompra);
+document.getElementById("closeModalCompra")?.addEventListener("click", cerrarModalCompra);
+document.getElementById("btnCancelarCompra")?.addEventListener("click", cerrarModalCompra);
+
+// Cambio de proveedor → actualizar productos disponibles
+document.getElementById("compraProvSelect")?.addEventListener("change", () => {
+  compraItems = [{ prodId: "", qty: 1, precio: "", desc: "" }];
+  renderCompraItemsModal();
+});
+
+// Agregar item
+document.getElementById("btnAgregarItemCompra")?.addEventListener("click", () => {
+  compraItems.push({ prodId: "", qty: 1, precio: "", desc: "" });
+  renderCompraItemsModal();
+});
+
+// Delegación en items del modal
+document.getElementById("compraItems")?.addEventListener("change", e => {
+  const iProd  = e.target.dataset.ciProd;
+  const iQty   = e.target.dataset.ciQty;
+  const iPrecio = e.target.dataset.ciPrecio;
+  if (iProd !== undefined) {
+    const p = allProducts.find(x => x._id === e.target.value);
+    compraItems[iProd].prodId = e.target.value;
+    compraItems[iProd].desc   = p?.desc || "";
+    compraItems[iProd].precio = p?.lista || "";
+    renderCompraItemsModal();
+  }
+  if (iQty !== undefined)    { compraItems[iQty].qty    = parseInt(e.target.value) || 1; renderCompraItemsModal(); }
+  if (iPrecio !== undefined) { compraItems[iPrecio].precio = e.target.value; renderCompraItemsModal(); }
+});
+
+document.getElementById("compraItems")?.addEventListener("click", e => {
+  const btn = e.target.closest("[data-ci-del]");
+  if (!btn) return;
+  compraItems.splice(parseInt(btn.dataset.ciDel), 1);
+  if (!compraItems.length) compraItems.push({ prodId: "", qty: 1, precio: "", desc: "" });
+  renderCompraItemsModal();
+});
+
+// Confirmar compra
+document.getElementById("btnConfirmarCompra")?.addEventListener("click", async () => {
+  const provId = document.getElementById("compraProvSelect")?.value;
+  if (!provId) { showToast("Seleccioná un proveedor.", "error"); return; }
+
+  const itemsValidos = compraItems.filter(i => i.prodId && (parseInt(i.qty)||0) > 0);
+  if (!itemsValidos.length) { showToast("Agregá al menos un producto.", "error"); return; }
+
+  const prov   = proveedoresData[provId]?.nombre || "—";
+  const nota   = document.getElementById("compraNotaInput")?.value.trim();
+  const total  = Math.round(calcTotalCompra());
+  const fecha  = todayKey();
+
+  // Guardar en Firestore
+  const compraRef = doc(collection(db, "compras"));
+  await setDoc(compraRef, {
+    proveedor: prov, provId, nota,
+    items: itemsValidos.map(i => ({ prodId: i.prodId, desc: i.desc, qty: parseInt(i.qty)||1, precio: parseFloat(i.precio)||0 })),
+    total, fecha, ts: new Date().toISOString(),
+    admin: getNombreUsuario()
+  });
+
+  // Actualizar stock de cada producto
+  for (const item of itemsValidos) {
+    const prod = allProducts.find(p => p._id === item.prodId);
+    if (prod && typeof prod.stock === "number") {
+      await updateDoc(doc(db, "productos", item.prodId), {
+        stock: prod.stock + (parseInt(item.qty) || 0)
+      });
+    }
+  }
+
+  registrarLog("compra", `Compra registrada — ${fmt(total)} · ${prov}`);
+  showToast(`Compra registrada ✓ — ${fmt(total)}`, "success");
+  cerrarModalCompra();
 });
