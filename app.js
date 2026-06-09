@@ -860,8 +860,8 @@ document.addEventListener("keydown", e => {
     return;
   }
 
-  // ── Ctrl+Delete — vaciar carrito ──
-  if (e.key === "Delete" && e.ctrlKey && viewVenta) {
+  // ── Ctrl+Delete / Ctrl+Backspace — vaciar carrito ──
+  if ((e.key === "Delete" || e.key === "Backspace") && e.ctrlKey && viewVenta) {
     e.preventDefault();
     if (Object.keys(cart).length === 0) return;
     if (!confirm("¿Vaciar el carrito?")) return;
