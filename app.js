@@ -435,6 +435,12 @@ function initFirebase() {
   // Clientes
   initClientesListener();
 
+  // Anulaciones
+  _unsubs.push(onSnapshot(collection(db, "anulaciones"), snap => {
+    anulacionesData = snap.docs.map(d => ({ ...d.data(), _id: d.id }));
+    if (histTabActiva === "anulaciones") renderHistorialAnulaciones();
+  }));
+
   // Config márgenes
   _unsubs.push(onSnapshot(doc(db, "config", "margenes"), snap => {
     if (snap.exists()) Object.assign(margenesConfig, snap.data());
@@ -1990,6 +1996,15 @@ Esta acción no se puede deshacer.`)) return;
     if (prod && typeof prod.stock === "number") {
       updateDoc(doc(db, 'productos', prod._id), { stock: prod.stock + item.qty });
     }
+  });
+  // Guardar en colección anulaciones para historial detallado
+  setDoc(doc(collection(db, "anulaciones")), {
+    ventaId, fecha, turno,
+    total:   venta.total || 0,
+    metodo:  venta.metodo || "—",
+    items:   venta.items  || [],
+    admin:   getNombreUsuario(),
+    ts:      new Date().toISOString()
   });
   registrarLog("anulacion", `Venta anulada — ${fmt(venta.total)} · ${(venta.items||[]).map(i=>i.desc).join(", ")}`);
   showToast("Venta anulada ✓", "success");
@@ -3733,29 +3748,30 @@ let histPeriodoActivo = "7";
 
 function switchHistTab(tab) {
   histTabActiva = tab;
-  document.getElementById("histTabPrecios")?.classList.toggle("active", tab === "precios");
-  document.getElementById("histTabVentas")?.classList.toggle("active",  tab === "ventas");
-  document.getElementById("histTabGastos")?.classList.toggle("active",  tab === "gastos");
-  document.getElementById("histPanelPrecios").style.display = tab === "precios" ? "block" : "none";
-  document.getElementById("histPanelVentas").style.display  = tab === "ventas"  ? "block" : "none";
-  document.getElementById("histPanelGastos").style.display  = tab === "gastos"  ? "block" : "none";
+  ["precios","ventas","gastos","anulaciones"].forEach(t => {
+    document.getElementById(`histTab${t.charAt(0).toUpperCase()+t.slice(1)}`)?.classList.toggle("active", t === tab);
+    document.getElementById(`histPanel${t.charAt(0).toUpperCase()+t.slice(1)}`).style.display = t === tab ? "block" : "none";
+  });
   const pw = document.getElementById("histVentasPeriodoWrap");
-  if (pw) pw.style.display = (tab === "ventas" || tab === "gastos") ? "flex" : "none";
-  if (tab === "ventas") renderHistorialVentas();
-  if (tab === "gastos") renderHistorialGastos();
+  if (pw) pw.style.display = ["ventas","gastos","anulaciones"].includes(tab) ? "flex" : "none";
+  if (tab === "ventas")      renderHistorialVentas();
+  if (tab === "gastos")      renderHistorialGastos();
+  if (tab === "anulaciones") renderHistorialAnulaciones();
 }
 
-document.getElementById("histTabPrecios")?.addEventListener("click", () => switchHistTab("precios"));
-document.getElementById("histTabVentas")?.addEventListener("click",  () => switchHistTab("ventas"));
-document.getElementById("histTabGastos")?.addEventListener("click",  () => switchHistTab("gastos"));
+document.getElementById("histTabPrecios")?.addEventListener("click",     () => switchHistTab("precios"));
+document.getElementById("histTabVentas")?.addEventListener("click",      () => switchHistTab("ventas"));
+document.getElementById("histTabGastos")?.addEventListener("click",      () => switchHistTab("gastos"));
+document.getElementById("histTabAnulaciones")?.addEventListener("click", () => switchHistTab("anulaciones"));
 
 document.querySelectorAll(".hist-periodo").forEach(btn => {
   btn.addEventListener("click", () => {
     histPeriodoActivo = btn.dataset.periodo;
     document.querySelectorAll(".hist-periodo").forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
-    if (histTabActiva === "ventas") renderHistorialVentas();
-    if (histTabActiva === "gastos") renderHistorialGastos();
+    if (histTabActiva === "ventas")      renderHistorialVentas();
+    if (histTabActiva === "gastos")      renderHistorialGastos();
+    if (histTabActiva === "anulaciones") renderHistorialAnulaciones();
   });
 });
 
@@ -3897,7 +3913,70 @@ function renderHistorialGastos() {
   }).join("");
 }
 
-document.getElementById("actFiltroTipo")?.addEventListener("change", renderActividad);
+// ── Render historial de anulaciones ──
+let anulacionesData = [];
+
+function renderHistorialAnulaciones() {
+  const tbody = document.getElementById("histAnulacionesBody");
+  if (!tbody) return;
+
+  const hoy = new Date();
+  let desde;
+  if (histPeriodoActivo === "7")        { desde = new Date(hoy); desde.setDate(hoy.getDate() - 6); }
+  else if (histPeriodoActivo === "30")  { desde = new Date(hoy); desde.setDate(hoy.getDate() - 29); }
+  else if (histPeriodoActivo === "mes") { desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1); }
+  else                                  { desde = new Date(hoy.getFullYear(), 0, 1); }
+  const desdeKey = desde.toISOString().slice(0, 10);
+  const hoyKey   = hoy.toISOString().slice(0, 10);
+
+  // Combinar anulaciones de Firestore + logs antiguos
+  const deFirestore = anulacionesData.filter(a => a.fecha >= desdeKey && a.fecha <= hoyKey);
+
+  // Anulaciones antiguas solo de logs (las que no tienen entrada en anulacionesData)
+  const ventaIdsNuevos = new Set(anulacionesData.map(a => a.ventaId));
+  const deLogs = logsData
+    .filter(l => l.tipo === "anulacion" && l.fecha >= desdeKey && l.fecha <= hoyKey)
+    .filter(l => !ventaIdsNuevos.has(l.ventaId))
+    .map(l => ({
+      fecha:  l.fecha || l.ts?.slice(0,10) || "—",
+      hora:   l.ts ? new Date(l.ts).toLocaleTimeString("es-AR", {hour:"2-digit",minute:"2-digit"}) : "—",
+      total:  null,
+      metodo: "—",
+      items:  [],
+      desc:   l.desc || "—",
+      admin:  l.usuario || "—",
+      deLogs: true
+    }));
+
+  const lista = [...deFirestore, ...deLogs].sort((a, b) => {
+    const fa = `${a.fecha} ${a.hora || ""}`;
+    const fb = `${b.fecha} ${b.hora || ""}`;
+    return fb.localeCompare(fa);
+  });
+
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-row">No hay anulaciones en el período seleccionado.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = lista.map(a => {
+    const [fy, fm, fd] = (a.fecha || "").split("-");
+    const fechaFmt = a.fecha ? `${parseInt(fd)}/${parseInt(fm)}/${fy}` : "—";
+    const hora     = a.hora || (a.ts ? new Date(a.ts).toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}) : "—");
+    const productos = a.deLogs
+      ? (a.desc || "—").replace("Venta anulada — ", "").replace(/^\$[\d.,]+ · /, "")
+      : (a.items||[]).map(i => `${i.desc}${i.qty > 1 ? ` ×${i.qty}` : ""}`).join(", ") || "—";
+    const total = a.total != null ? fmt(a.total) : "—";
+    return `<tr>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)">${fechaFmt}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)">${hora}</td>
+      <td style="font-size:13px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${productos}">${productos}</td>
+      <td class="num" style="font-weight:600;color:var(--danger)">${total}</td>
+      <td style="font-size:12px;color:var(--text2)">${a.metodo || "—"}</td>
+      <td style="font-size:12px;color:var(--text2)">${a.admin || "—"}</td>
+    </tr>`;
+  }).join("");
+}
 document.getElementById("actFiltroUsuario")?.addEventListener("change", renderActividad);
 
 // ============================================================
