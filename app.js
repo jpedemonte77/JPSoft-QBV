@@ -474,7 +474,7 @@ function rebuildGananciaMap() {
 // ============================================================
 //  NAVEGACIÓN
 // ============================================================
-const VIEWS = { venta: "Venta", caja: "Caja", gastos: "Gastos", clientes: "Clientes", productos: "Productos", proveedores: "Proveedores", reportes: "Reportes", "historial-precios": "Historial de precios", actividad: "Actividad", soporte: "Soporte", backup: "Backup" };
+const VIEWS = { venta: "Venta", caja: "Caja", gastos: "Gastos", clientes: "Clientes", productos: "Productos", proveedores: "Proveedores", reportes: "Reportes", "historial-precios": "Historial", actividad: "Actividad", soporte: "Soporte", backup: "Backup" };
 
 document.querySelectorAll(".nav-item[data-view]").forEach(btn => {
   btn.addEventListener("click", () => {
@@ -3719,8 +3719,114 @@ function renderHistorialPrecios() {
   }).join("");
 }
 
-document.getElementById("histFilterProv")?.addEventListener("change", renderHistorialPrecios);
-document.getElementById("histFilterProd")?.addEventListener("input",  renderHistorialPrecios);
+document.getElementById("histFilterProv")?.addEventListener("change", () => { renderHistorialPrecios(); renderHistorialVentas(); });
+document.getElementById("histFilterProd")?.addEventListener("input",  () => { renderHistorialPrecios(); renderHistorialVentas(); });
+
+// ── Pestañas del Historial ──
+let histTabActiva   = "precios";
+let histPeriodoActivo = "7";
+
+function switchHistTab(tab) {
+  histTabActiva = tab;
+  document.getElementById("histTabPrecios")?.classList.toggle("active", tab === "precios");
+  document.getElementById("histTabVentas")?.classList.toggle("active",  tab === "ventas");
+  document.getElementById("histPanelPrecios").style.display = tab === "precios" ? "block" : "none";
+  document.getElementById("histPanelVentas").style.display  = tab === "ventas"  ? "block" : "none";
+  const pw = document.getElementById("histVentasPeriodoWrap");
+  if (pw) { pw.style.display = tab === "ventas" ? "flex" : "none"; }
+  if (tab === "ventas") renderHistorialVentas();
+}
+
+document.getElementById("histTabPrecios")?.addEventListener("click", () => switchHistTab("precios"));
+document.getElementById("histTabVentas")?.addEventListener("click",  () => switchHistTab("ventas"));
+
+document.querySelectorAll(".hist-periodo").forEach(btn => {
+  btn.addEventListener("click", () => {
+    histPeriodoActivo = btn.dataset.periodo;
+    document.querySelectorAll(".hist-periodo").forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    renderHistorialVentas();
+  });
+});
+
+// ── Render historial de ventas ──
+function renderHistorialVentas() {
+  const tbody    = document.getElementById("histVentasBody");
+  if (!tbody) return;
+  const provFilt = document.getElementById("histFilterProv")?.value || "";
+  const prodFilt = norm(document.getElementById("histFilterProd")?.value || "");
+
+  // Calcular rango de fechas según período
+  const hoy  = new Date();
+  let desde;
+  if (histPeriodoActivo === "7") {
+    desde = new Date(hoy); desde.setDate(hoy.getDate() - 6);
+  } else if (histPeriodoActivo === "30") {
+    desde = new Date(hoy); desde.setDate(hoy.getDate() - 29);
+  } else if (histPeriodoActivo === "mes") {
+    desde = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  } else {
+    desde = new Date(hoy.getFullYear(), 0, 1);
+  }
+  const desdeKey = desde.toISOString().slice(0, 10);
+  const hoyKey   = hoy.toISOString().slice(0, 10);
+
+  // Acumular ventas por producto desde cajaData
+  const porProducto = {};
+
+  Object.entries(cajaData).forEach(([fecha, diaData]) => {
+    if (fecha < desdeKey || fecha > hoyKey) return;
+    ["manana", "tarde"].forEach(turno => {
+      const ventas = diaData[turno]?.ventas || {};
+      Object.values(ventas).forEach(v => {
+        if (!v.items) return;
+        v.items.forEach(item => {
+          if (provFilt && item.proveedor !== provFilt) return;
+          if (prodFilt && !norm(item.desc || "").includes(prodFilt)) return;
+          const key = item.desc || "Sin nombre";
+          if (!porProducto[key]) {
+            porProducto[key] = {
+              desc: item.desc || "—",
+              proveedor: item.proveedor || "—",
+              unidades: 0,
+              total: 0,
+              precioVenta: item.precioVenta || item.precio || 0,
+              ultimaVenta: ""
+            };
+          }
+          porProducto[key].unidades += item.qty || 1;
+          porProducto[key].total    += (item.precioVenta || item.precio || 0) * (item.qty || 1);
+          const ts = `${fecha} ${v.hora || "00:00"}`;
+          if (ts > porProducto[key].ultimaVenta) {
+            porProducto[key].ultimaVenta = ts;
+            porProducto[key].precioVenta = item.precioVenta || item.precio || 0;
+          }
+        });
+      });
+    });
+  });
+
+  const lista = Object.values(porProducto).sort((a, b) => b.unidades - a.unidades);
+
+  if (!lista.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-row">No hay ventas en el período seleccionado.</td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = lista.map(p => {
+    const [fechaStr, horaStr] = p.ultimaVenta.split(" ");
+    const [fy, fm, fd] = (fechaStr || "").split("-");
+    const fechaFmt = fechaStr ? `${parseInt(fd)}/${parseInt(fm)} ${horaStr || ""}` : "—";
+    return `<tr>
+      <td style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${p.desc}">${p.desc}</td>
+      <td><span class="badge ${badgeClass(p.proveedor)}">${p.proveedor}</span></td>
+      <td class="num" style="font-weight:600">${p.unidades}</td>
+      <td class="num" style="font-weight:500">${fmt(Math.round(p.total))}</td>
+      <td class="num" style="color:var(--text2)">${fmt(Math.round(p.precioVenta))}</td>
+      <td style="font-size:12px;color:var(--text2);font-family:'DM Mono',monospace">${fechaFmt}</td>
+    </tr>`;
+  }).join("");
+}
 
 document.getElementById("actFiltroTipo")?.addEventListener("change", renderActividad);
 document.getElementById("actFiltroUsuario")?.addEventListener("change", renderActividad);
