@@ -511,6 +511,8 @@ function registrarLog(tipo, desc, extra = {}) {
 
 let logsData = [];
 
+let actSeleccionadas = new Set();
+
 function renderActividad() {
   const wrap    = document.getElementById("actLogWrap");
   if (!wrap) return;
@@ -522,6 +524,14 @@ function renderActividad() {
   if (filtroTipo) logs = logs.filter(l => l.tipo === filtroTipo);
   if (filtroUser) logs = logs.filter(l => l.usuario === filtroUser);
   logs.sort((a,b) => b.ts.localeCompare(a.ts));
+
+  // Actualizar botón eliminar seleccionadas
+  const btnElim = document.getElementById("btnEliminarActSelec");
+  const cntEl   = document.getElementById("actSelecCount");
+  const activos = [...actSeleccionadas].filter(id => logs.some(l => l._id === id));
+  actSeleccionadas = new Set(activos);
+  if (btnElim) btnElim.style.display = activos.length ? "flex" : "none";
+  if (cntEl)   cntEl.textContent = activos.length;
 
   if (!logs.length) {
     wrap.innerHTML = `<div class="empty-row">Sin actividad registrada.</div>`;
@@ -556,23 +566,31 @@ function renderActividad() {
     return `${d.getDate()}/${d.getMonth()+1}, ${hora}`;
   }
 
-  wrap.innerHTML = logs.map(l => {
-    const badge = TIPO_BADGE[l.tipo] || TIPO_BADGE.backup;
-    const dot   = TIPO_DOT[l.tipo] || "#888";
-    return `<div style="display:flex;align-items:flex-start;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border)">
-      <div style="width:8px;height:8px;border-radius:50%;background:${dot};flex-shrink:0;margin-top:4px"></div>
-      <div style="font-size:11px;color:var(--text3);white-space:nowrap;font-family:'DM Mono',monospace;min-width:100px;padding-top:1px">${fmtTs(l.ts)}</div>
-      <div style="flex:1">
-        <div style="font-size:13px;color:var(--text);line-height:1.4">${l.desc}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px">${l.usuario||"—"}</div>
+  wrap.innerHTML = logs.map((l, i) => {
+    const badge   = TIPO_BADGE[l.tipo] || TIPO_BADGE.backup;
+    const dot     = TIPO_DOT[l.tipo] || "#888";
+    const checked = actSeleccionadas.has(l._id);
+    const isLast  = i === logs.length - 1;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:${isLast ? "none" : "1px solid var(--border)"}">
+      <input type="checkbox" class="act-check" data-id="${l._id}"
+        style="width:14px;height:14px;cursor:pointer;flex-shrink:0;accent-color:var(--accent)"
+        ${checked ? "checked" : ""} />
+      <div style="width:8px;height:8px;border-radius:50%;background:${dot};flex-shrink:0"></div>
+      <div style="font-size:11px;color:var(--text3);white-space:nowrap;font-family:'DM Mono',monospace;min-width:100px">${fmtTs(l.ts)}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:13px;color:var(--text);line-height:1.4;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.desc}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:1px">${l.usuario||"—"}</div>
       </div>
       <span style="font-size:10px;font-weight:500;padding:2px 8px;border-radius:10px;white-space:nowrap;${badge.cls}">${badge.label}</span>
+      <button type="button" class="act-del-btn" data-id="${l._id}"
+        style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text3);flex-shrink:0;display:flex;align-items:center" title="Eliminar">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+          <path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/>
+        </svg>
+      </button>
     </div>`;
-  }).join("").replace(/border-bottom[^"]+last-child/g, "") + '';
-
-  // Quitar border del último
-  const rows = wrap.querySelectorAll('[style*="border-bottom:1px"]');
-  if (rows.length) rows[rows.length-1].style.borderBottom = "none";
+  }).join("");
 
   // Popular filtro usuarios
   const usuarios = [...new Set(logsData.map(l => l.usuario).filter(Boolean))].sort();
@@ -586,6 +604,38 @@ function renderActividad() {
   }
 }
 
+// ── Delegación de eventos en el log de actividad ──
+document.getElementById("actLogWrap")?.addEventListener("change", e => {
+  const cb = e.target.closest(".act-check");
+  if (!cb) return;
+  const id = cb.dataset.id;
+  if (cb.checked) actSeleccionadas.add(id);
+  else actSeleccionadas.delete(id);
+  const btnElim = document.getElementById("btnEliminarActSelec");
+  const cntEl   = document.getElementById("actSelecCount");
+  if (btnElim) btnElim.style.display = actSeleccionadas.size ? "flex" : "none";
+  if (cntEl)   cntEl.textContent = actSeleccionadas.size;
+});
+
+document.getElementById("actLogWrap")?.addEventListener("click", async e => {
+  const btn = e.target.closest(".act-del-btn");
+  if (!btn) return;
+  const id = btn.dataset.id;
+  if (!confirm("¿Eliminar este registro de actividad?")) return;
+  await deleteDoc(doc(db, "actividad", id));
+  actSeleccionadas.delete(id);
+  showToast("Registro eliminado ✓", "success");
+});
+
+document.getElementById("btnEliminarActSelec")?.addEventListener("click", async () => {
+  if (!actSeleccionadas.size) return;
+  if (!confirm(`¿Eliminar ${actSeleccionadas.size} registro${actSeleccionadas.size > 1 ? "s" : ""} de actividad?\n\nEsta acción no se puede deshacer.`)) return;
+  const batch = writeBatch(db);
+  actSeleccionadas.forEach(id => batch.delete(doc(db, "actividad", id)));
+  await batch.commit();
+  actSeleccionadas.clear();
+  showToast("Registros eliminados ✓", "success");
+});
 // ── Modo nocturno ──
 (function() {
   const DARK_KEY = "jpsoft_dark_mode";
