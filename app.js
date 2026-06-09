@@ -487,6 +487,11 @@ document.querySelectorAll(".nav-item[data-view]").forEach(btn => {
     // Cerrar sidebar en mobile
     document.getElementById("sidebar").classList.remove("open");
     document.getElementById("sidebar-overlay").classList.remove("open");
+    // Renders específicos por vista
+    if (view === "historial-precios") renderHistorialPrecios();
+    if (view === "actividad")         renderActividad();
+    if (view === "gastos")            renderGastos();
+    if (view === "clientes")          renderClientesLista();
   });
 });
 
