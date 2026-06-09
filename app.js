@@ -1928,10 +1928,6 @@ document.getElementById("btnLimpiarBusqueda")?.addEventListener("click", () => {
 });
 
 // Teclas en nueva vista Venta: Enter agrega primer resultado, flechas navegan
-document.getElementById("ventaListaResultados")?.addEventListener("click", e => {
-  const row = e.target.closest(".venta-result-row");
-  if (row) window._addFromResult(parseInt(row.dataset.idx));
-});
 document.getElementById("notaToggleHeader")?.addEventListener("click", () => {
   const body    = document.getElementById("notaToggleBody");
   const chevron = document.getElementById("notaToggleChevron");
