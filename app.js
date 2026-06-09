@@ -1327,6 +1327,7 @@ document.querySelectorAll(".desc-tipo-btn").forEach(btn => {
 
 document.getElementById("descuentoInput")?.addEventListener("input", function() {
   descuentoValor = parseFloat(this.value) || 0;
+  renderModalVenta();
   renderCart();
 });
 
