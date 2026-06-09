@@ -1395,3 +1395,42 @@ tr.fila-activa td { background: var(--info-bg); }
 }
 .venta-add-btn.added { background: var(--success, #1D9E75); }
 .venta-add-btn.disabled { background: var(--border2); color: var(--text3); }
+
+/* ===========================
+   HISTORIAL — PESTAÑAS
+=========================== */
+.hist-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text2);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--transition);
+}
+.hist-tab:not(:last-child) { border-right: 1px solid var(--border); }
+.hist-tab:hover { color: var(--text); background: var(--bg3); }
+.hist-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: none; }
+
+.hist-periodo {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--border2);
+  background: var(--surface2);
+  color: var(--text2);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all var(--transition);
+}
+.hist-periodo:hover { border-color: var(--accent); color: var(--accent); }
+.hist-periodo.active { background: var(--accent); color: #fff; border-color: var(--accent); }
