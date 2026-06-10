@@ -860,11 +860,6 @@ document.addEventListener("keydown", e => {
         document.getElementById("btnConfirmarVentaFinal")?.click();
         return;
       }
-      if (e.key.toLowerCase() === "g") {
-        e.preventDefault();
-        document.getElementById("btnGuardarTicket")?.click();
-        return;
-      }
       if (e.key === "Escape") {
         document.getElementById("modalVenta").classList.add("hidden");
         return;
@@ -1483,27 +1478,6 @@ document.getElementById("closeModalVenta").addEventListener("click", () => docum
 document.getElementById("btnCancelarVenta").addEventListener("click", () => document.getElementById("modalVenta").classList.add("hidden"));
 
 // Guardar ticket como .txt
-document.getElementById("btnGuardarTicket").addEventListener("click", () => {
-  const { keys, total, hora, fecha } = window._ventaPendiente || {};
-  if (!keys) return;
-  const metodoLabel = { efectivo: "Efectivo", debito: "Débito", credito: "Crédito", mp: "Mercado Pago" };
-  const lineas = keys.map(k => {
-    const { product: p, qty } = cart[k];
-    const sub = getPrecioVenta(p) * qty;
-    const det = qty > 1 ? `${p.desc} x${qty}` : p.desc;
-    return `${det.padEnd(35, ".")} ${fmtDec(sub)}`;
-  }).join("\n");
-  const _notaTxt = document.getElementById("notaVentaInput")?.value?.trim() || "";
-  const txt = `JPSoft | Tienda\n${fecha} — ${hora} hs\nMétodo: ${metodoLabel[metodoSeleccionado]}${_notaTxt ? "\nNota: " + _notaTxt : ""}\n\n${lineas}\n\n${"─".repeat(45)}\nTOTAL: ${fmtDec(total)}`;
-  const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `Ticket_${fecha.replace(/\//g,"-")}_${hora.replace(":","-")}.txt`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-  confirmarVentaFinal();
-});
-
 // Confirmar venta final → guardar en Firebase
 document.getElementById("btnConfirmarVentaFinal").addEventListener("click", confirmarVentaFinal);
 
@@ -1578,8 +1552,21 @@ async function confirmarVentaFinal() {
   window._ventaPendiente = null;
   document.getElementById("modalVenta").classList.add("hidden");
   renderCart();
+  renderCartLateral();
   renderProductosVenta();
-  showToast("Venta registrada ✓", "success");
+
+  // Guardar datos del ticket para imprimir/guardar
+  window._ultimaVenta = {
+    items, total: Math.round(total), subtotal: Math.round(vSubtotal || total),
+    descuento: Math.round(vDesc || 0), metodo: metodoSeleccionado,
+    hora, fecha: todayKey(), admin: getNombreUsuario()
+  };
+
+  // Mostrar modal post-venta
+  const metodoLabel = { efectivo: "Efectivo", mp: "Mercado Pago", debito: "Débito", credito: "Crédito" };
+  document.getElementById("ventaConfirmadaResumen").textContent =
+    `${fmt(Math.round(total))} · ${metodoLabel[metodoSeleccionado] || metodoSeleccionado}`;
+  document.getElementById("modalVentaConfirmada").classList.remove("hidden");
 
   // 3. Escribir en Firestore en segundo plano (funciona offline)
   const cajaRef = doc(db, 'caja', todayKey());
@@ -5386,5 +5373,138 @@ document.getElementById("notasGrid")?.addEventListener("click", async e => {
     const n = notasData.find(x => x._id === btnToggle.dataset.notaToggle);
     if (!n) return;
     await updateDoc(doc(db, "notas", n._id), { completada: !n.completada });
+  }
+});
+
+// ============================================================
+//  TICKET DE VENTA
+// ============================================================
+
+function cerrarModalVentaConfirmada() {
+  document.getElementById("modalVentaConfirmada").classList.add("hidden");
+  showToast("Venta registrada ✓", "success");
+}
+
+document.getElementById("btnCerrarVentaConfirmada")?.addEventListener("click", cerrarModalVentaConfirmada);
+
+// ── Ticket térmico (.txt) ──
+document.getElementById("btnImprimirTicket")?.addEventListener("click", () => {
+  const v = window._ultimaVenta;
+  if (!v) return;
+
+  const W = 40;
+  const centro = s => s.padStart(Math.floor((W + s.length) / 2)).padEnd(W);
+  const linea  = () => "-".repeat(W);
+  const lineaPuntos = () => "- ".repeat(W / 2);
+  const fila   = (izq, der) => {
+    const esp = W - izq.length - der.length;
+    return izq + " ".repeat(Math.max(1, esp)) + der;
+  };
+
+  const [fy, fm, fd] = v.fecha.split("-");
+  const fechaFmt = `${parseInt(fd)}/${parseInt(fm)}/${fy}  ${v.hora || ""}`;
+  const metodoLabel = { efectivo: "Efectivo", mp: "Mercado Pago", debito: "Débito", credito: "Crédito" };
+
+  let txt = "";
+  txt += centro("JPSoft | Tienda") + "\n";
+  txt += centro(fechaFmt) + "\n";
+  txt += lineaPuntos() + "\n";
+
+  v.items.forEach(item => {
+    txt += (item.desc || "").substring(0, W) + "\n";
+    const precioStr = fmt(item.precioUnit || 0);
+    const subStr    = fmt((item.precioUnit || 0) * (item.qty || 1));
+    txt += fila(`  ${item.qty} x ${precioStr}`, subStr) + "\n";
+  });
+
+  txt += lineaPuntos() + "\n";
+  if (v.descuento > 0) {
+    txt += fila("Subtotal", fmt(v.subtotal)) + "\n";
+    txt += fila("Descuento", "-" + fmt(v.descuento)) + "\n";
+  }
+  txt += linea() + "\n";
+  txt += fila("TOTAL", fmt(v.total)) + "\n";
+  txt += `Metodo: ${metodoLabel[v.metodo] || v.metodo || "—"}` + "\n";
+  txt += lineaPuntos() + "\n";
+  txt += centro("Gracias por su compra") + "\n";
+  txt += centro("JPSoft | Tienda") + "\n";
+
+  // Imprimir via ventana auxiliar
+  const win = window.open("", "_blank", "width=400,height=600");
+  win.document.write(`<html><head><title>Ticket</title>
+    <style>body{font-family:monospace;font-size:12px;white-space:pre;padding:10px}
+    @media print{@page{margin:5mm}}</style></head>
+    <body>${txt.replace(/&/g,"&amp;").replace(/</g,"&lt;")}</body></html>`);
+  win.document.close();
+  win.focus();
+  win.print();
+  cerrarModalVentaConfirmada();
+});
+
+// ── Ticket PDF ──
+document.getElementById("btnGuardarTicketPDF")?.addEventListener("click", async () => {
+  const v = window._ultimaVenta;
+  if (!v) return;
+
+  const btn  = document.getElementById("btnGuardarTicketPDF");
+  const orig = btn.innerHTML;
+  btn.disabled = true; btn.textContent = "Generando…";
+
+  const [fy, fm, fd] = v.fecha.split("-");
+  const fechaFmt  = `${parseInt(fd)}/${parseInt(fm)}/${fy}`;
+  const metodoLabel = { efectivo: "Efectivo", mp: "Mercado Pago", debito: "Débito", credito: "Crédito" };
+
+  const filas = v.items.map(item => `<tr style="border-bottom:1px solid #f5f5f5">
+    <td style="padding:5px 0;font-size:12px">${item.desc || "—"}</td>
+    <td style="text-align:center;font-size:12px">${item.qty || 1}</td>
+    <td style="text-align:right;font-size:12px">${fmt((item.precioUnit||0)*(item.qty||1))}</td>
+  </tr>`).join("");
+
+  const descRow = v.descuento > 0 ? `
+    <tr><td colspan="2" style="padding:3px 0;font-size:11px;color:#888">Subtotal</td><td style="text-align:right;font-size:11px;color:#888">${fmt(v.subtotal)}</td></tr>
+    <tr><td colspan="2" style="padding:3px 0;font-size:11px;color:#888">Descuento</td><td style="text-align:right;font-size:11px;color:#888">-${fmt(v.descuento)}</td></tr>` : "";
+
+  const content = `<div style="font-family:'DM Sans',Arial,sans-serif;font-size:13px;color:#111;padding:24px;max-width:320px;margin:0 auto">
+    <div style="font-size:18px;font-weight:600;margin-bottom:2px">JPSoft | Tienda</div>
+    <div style="font-size:11px;color:#888;margin-bottom:14px">${fechaFmt} · ${v.hora || ""}</div>
+    <div style="border-top:1px solid #eee;margin-bottom:10px"></div>
+    <table style="width:100%;border-collapse:collapse">
+      <thead><tr style="font-size:9px;color:#aaa;text-transform:uppercase;letter-spacing:.05em">
+        <th style="text-align:left;padding-bottom:5px;font-weight:400">Producto</th>
+        <th style="text-align:center;padding-bottom:5px;font-weight:400">Cant.</th>
+        <th style="text-align:right;padding-bottom:5px;font-weight:400">Subtotal</th>
+      </tr></thead>
+      <tbody>${filas}</tbody>
+    </table>
+    <div style="border-top:1px solid #eee;margin:8px 0 4px"></div>
+    <table style="width:100%;border-collapse:collapse">${descRow}
+      <tr style="border-top:2px solid #111">
+        <td colspan="2" style="padding:6px 0;font-weight:500;font-size:15px">Total</td>
+        <td style="text-align:right;font-weight:500;font-size:18px">${fmt(v.total)}</td>
+      </tr>
+    </table>
+    <div style="font-size:11px;color:#888;margin-top:4px">${metodoLabel[v.metodo] || v.metodo || "—"} · ${v.admin || ""}</div>
+    <div style="border-top:1px solid #eee;margin-top:14px;padding-top:8px;text-align:center;font-size:10px;color:#bbb">Gracias por su compra · JPSoft | Tienda</div>
+  </div>`;
+
+  const container = document.createElement("div");
+  container.style.cssText = "position:fixed;left:-9999px;top:0;width:360px;background:#fff";
+  container.innerHTML = content;
+  document.body.appendChild(container);
+
+  try {
+    const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: "#fff" });
+    const { jsPDF } = window.jspdf;
+    const pdf   = new jsPDF({ orientation: "portrait", unit: "mm", format: [80, 200] });
+    const imgW  = 80;
+    const imgH  = (canvas.height * imgW) / canvas.width;
+    pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, imgW, imgH);
+    pdf.save(`Ticket_${v.fecha}_${v.hora?.replace(":", "") || ""}.pdf`);
+    cerrarModalVentaConfirmada();
+  } catch(err) {
+    showToast("Error al generar PDF: " + err.message, "error");
+  } finally {
+    document.body.removeChild(container);
+    btn.disabled = false; btn.innerHTML = orig;
   }
 });
