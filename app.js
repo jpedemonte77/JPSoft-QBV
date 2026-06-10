@@ -6273,7 +6273,7 @@ function renderNotifPanel() {
     const col    = TIPO_COLOR[a.nivel] || TIPO_COLOR.warning;
     const icon   = TIPO_ICON[a.tipo]   || "ti-bell";
     const isLast = i === alertasActivas.length - 1;
-    return `<div style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:${isLast ? "none" : "1px solid var(--border)"}">
+    return `<div class="notif-fila" style="display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-bottom:${isLast ? "none" : "1px solid var(--border)"}">
       <div style="width:8px;height:8px;border-radius:50%;background:${col.dot};flex-shrink:0;margin-top:4px"></div>
       <div style="flex:1;min-width:0">
         <div style="font-size:13px;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.texto}</div>
@@ -6300,14 +6300,50 @@ function renderNotifPanel() {
 }
 
 // ── Toggle panel ──
+let notifFilaActiva = -1;
+
+function resaltarFilaNotif() {
+  const filas = document.querySelectorAll("#notifPanelBody .notif-fila");
+  filas.forEach((f, i) => {
+    f.style.background = i === notifFilaActiva ? "var(--bg3)" : "";
+  });
+  if (notifFilaActiva >= 0 && filas[notifFilaActiva]) {
+    filas[notifFilaActiva].scrollIntoView({ block: "nearest" });
+  }
+}
+
+document.addEventListener("keydown", e => {
+  const panel = document.getElementById("notifPanel");
+  if (!panel || panel.style.display === "none") return;
+  const filas = document.querySelectorAll("#notifPanelBody .notif-fila");
+  if (!filas.length) return;
+
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    notifFilaActiva = Math.min(notifFilaActiva + 1, filas.length - 1);
+    resaltarFilaNotif();
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    notifFilaActiva = Math.max(notifFilaActiva - 1, 0);
+    resaltarFilaNotif();
+  } else if (e.key === "Enter" && notifFilaActiva >= 0) {
+    e.preventDefault();
+    filas[notifFilaActiva]?.querySelector(".notif-accion-btn")?.click();
+  } else if (e.key === "Escape") {
+    panel.style.display = "none";
+    notifFilaActiva = -1;
+  }
+});
 document.getElementById("btnNotificaciones")?.addEventListener("click", e => {
   e.stopPropagation();
   const panel = document.getElementById("notifPanel");
   if (panel.style.display === "none") {
+    notifFilaActiva = -1;
     renderNotifPanel();
     panel.style.display = "block";
   } else {
     panel.style.display = "none";
+    notifFilaActiva = -1;
   }
 });
 
