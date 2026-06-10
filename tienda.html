@@ -1311,57 +1311,41 @@
         </div>
       </div>
 
-      <!-- Cliente de la venta (opcional) -->
-      <div style="border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px 12px">
-        <div style="font-size:13px;color:var(--text2);margin-bottom:7px">Cliente <span style="font-size:11px;color:var(--text3)">(opcional)</span></div>
-        <div id="ventaClienteSelector" style="display:flex;align-items:center;gap:8px">
-          <select id="ventaClienteSelect" class="form-select" style="flex:1;font-size:12px">
+      <!-- Cliente y tipo de registro -->
+      <div id="ventaClienteBloque" style="border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px 12px;display:flex;flex-direction:column;gap:8px">
+        <div style="font-size:12px;color:var(--text2)">Cliente <span style="font-size:11px;color:var(--text3)">(opcional)</span></div>
+        <!-- Selector -->
+        <div id="ventaClienteSelector" style="display:flex">
+          <select id="ventaClienteSelect" class="form-select" style="width:100%;font-size:13px">
             <option value="">Sin cliente…</option>
           </select>
         </div>
-        <div id="ventaClienteSeleccionado" style="display:none;align-items:center;gap:8px;background:#EAF3DE;border:1px solid #9FE1CB;border-radius:var(--radius-sm);padding:6px 10px">
-          <div style="width:24px;height:24px;border-radius:50%;background:#1D9E75;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#fff;flex-shrink:0" id="ventaClienteAvatar">—</div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:12.5px;font-weight:500;color:#085041;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="ventaClienteNombre">—</div>
-            <div style="font-size:11px;color:#0F6E56" id="ventaClienteDeuda"></div>
+        <!-- Cliente seleccionado -->
+        <div id="ventaClienteSeleccionado" style="display:none;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px;background:#EAF3DE;border:1px solid #9FE1CB;border-radius:var(--radius-sm);padding:6px 10px">
+            <div style="width:24px;height:24px;border-radius:50%;background:#1D9E75;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:600;color:#fff;flex-shrink:0" id="ventaClienteAvatar">—</div>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12.5px;font-weight:500;color:#085041;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="ventaClienteNombre">—</div>
+              <div style="font-size:11px;color:#0F6E56" id="ventaClienteDeuda"></div>
+            </div>
+            <button type="button" id="btnQuitarClienteVenta" style="background:none;border:none;cursor:pointer;color:#0F6E56;font-size:14px;padding:2px">✕</button>
           </div>
-          <button type="button" id="btnQuitarClienteVenta" style="background:none;border:none;cursor:pointer;color:#0F6E56;font-size:14px;padding:2px">✕</button>
+          <!-- Chips tipo de registro -->
+          <div style="font-size:11px;color:var(--text3);margin-bottom:2px">¿Cómo registrarlo?</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <button type="button" class="venta-tipo-chip" data-tipo="" style="font-size:12px;padding:5px 12px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit">Solo registrar</button>
+            <button type="button" class="venta-tipo-chip" data-tipo="fiado" style="font-size:12px;padding:5px 12px;border-radius:var(--radius-sm);border:1px solid #F7C1C1;background:#FCEBEB;color:#A32D2D;cursor:pointer;font-family:inherit">Fiado</button>
+            <button type="button" class="venta-tipo-chip" data-tipo="cobro" style="font-size:12px;padding:5px 12px;border-radius:var(--radius-sm);border:1px solid #C0DD97;background:#EAF3DE;color:#3B6D11;cursor:pointer;font-family:inherit">Cobro</button>
+            <button type="button" class="venta-tipo-chip" data-tipo="cortesia" style="font-size:12px;padding:5px 12px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit">Cortesía</button>
+          </div>
         </div>
       </div>
 
-      <!-- Nota de venta — toggle colapsable -->
-      <div style="border:1px solid var(--border2);border-radius:var(--radius-sm);overflow:hidden">
-        <!-- Header del toggle -->
-        <div id="notaToggleHeader" style="padding:8px 12px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
-          <span style="font-size:14px;color:var(--text2)">Nota <span style="font-size:12px;color:var(--text3)">(opcional)</span></span>
-          <svg id="notaToggleChevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text3);transition:transform .2s"><polyline points="6 9 12 15 18 9"/></svg>
-        </div>
-        <!-- Contenido colapsable -->
-        <div id="notaToggleBody" style="display:none;border-top:1px solid var(--border2);padding:10px 12px;display:none;flex-direction:column;gap:9px">
-          <div style="display:flex;gap:6px;flex-wrap:wrap">
-            <button class="nota-chip" data-nota="Fiado">Fiado</button>
-            <button class="nota-chip" data-nota="Pago">Pago</button>
-            <button class="nota-chip" data-nota="Cortesía">Cortesía</button>
-          </div>
-          <!-- Selector de cliente (visible solo con Fiado o Pago) -->
-          <div id="cobroClienteWrap" style="display:none;background:var(--danger-bg);border:1px solid var(--danger-border);border-radius:var(--radius-sm);padding:10px 12px">
-            <div style="font-size:12px;font-weight:600;color:var(--danger);margin-bottom:7px;display:flex;align-items:center;gap:5px">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-              Cliente
-            </div>
-            <div style="display:flex;gap:7px;margin-bottom:6px">
-              <select id="cobroClienteSelect" class="form-select" style="flex:1;font-size:12.5px">
-                <option value="">Seleccioná un cliente…</option>
-              </select>
-              <button class="btn-secondary" id="btnCobroNuevoCliente" style="font-size:11px;padding:5px 9px;white-space:nowrap">+ Nuevo</button>
-            </div>
-            <div id="cobroClienteDeuda" style="font-size:11px;color:var(--danger);display:none">
-              Deuda actual: <span id="cobroClienteDeudaMonto"></span>
-            </div>
-          </div>
-          <input type="text" id="notaVentaInput" placeholder="O escribí una nota personalizada…" maxlength="100"
-            style="width:100%;font-size:12px;padding:7px 10px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface);font-family:inherit;outline:none;color:var(--text);box-sizing:border-box" />
-        </div>
+      <!-- Nota -->
+      <div style="border:1px solid var(--border2);border-radius:var(--radius-sm);padding:8px 12px">
+        <div style="font-size:12px;color:var(--text2);margin-bottom:6px">Nota <span style="font-size:11px;color:var(--text3)">(opcional)</span></div>
+        <input type="text" id="notaVentaInput" placeholder="Ej: regalo, pedido especial…" maxlength="100"
+          style="width:100%;font-size:12px;padding:7px 10px;border-radius:var(--radius-sm);border:1px solid var(--border2);background:var(--surface);font-family:inherit;outline:none;color:var(--text);box-sizing:border-box" />
       </div>
     </div>
     <div class="modal-footer" style="justify-content:space-between">
