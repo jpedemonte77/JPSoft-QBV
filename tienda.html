@@ -99,6 +99,10 @@
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
         Actividad
       </button>
+      <button class="nav-item" data-view="usuarios">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Usuarios
+      </button>
       <button class="nav-item" data-view="soporte">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         Soporte
@@ -1091,6 +1095,42 @@
     </div>
 
     <!-- ══════════════════════════════
+    <!-- ══════════════════════════════
+         VISTA: USUARIOS
+    ══════════════════════════════ -->
+    <div class="view" id="view-usuarios">
+      <div class="view-header">
+        <div></div>
+        <button class="btn-primary" id="btnNuevoUsuario">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          Nuevo usuario
+        </button>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
+        <table>
+          <colgroup>
+            <col style="min-width:200px">
+            <col style="min-width:200px">
+            <col style="width:120px">
+            <col style="width:100px">
+            <col style="width:80px">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Email</th>
+              <th style="text-align:center">Rol</th>
+              <th style="text-align:center">Estado</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="usuariosTableBody"></tbody>
+        </table>
+        <div class="empty-row" id="usuariosEmpty" style="display:none">No hay usuarios registrados.</div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════
          VISTA: SOPORTE
     ══════════════════════════════ -->
     <div class="view" id="view-soporte">
@@ -1725,6 +1765,44 @@
       <button type="button" id="btnCerrarVentaConfirmada" style="width:100%;padding:10px;font-size:13px;color:var(--text2);background:none;border:none;cursor:pointer;font-family:inherit">
         Cerrar
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     MODAL: NUEVO / EDITAR USUARIO
+══════════════════════════════ -->
+<div class="modal-overlay hidden" id="modalUsuario">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
+      <span class="modal-title" id="modalUsuarioTitulo">Nuevo usuario</span>
+      <button class="modal-close" id="closeModalUsuario">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="usuarioEditUid" />
+      <div class="form-group">
+        <label class="form-label">Nombre completo</label>
+        <input type="text" class="form-input" id="usuarioNombreInput" placeholder="Ej: Martín González" maxlength="60" />
+      </div>
+      <div class="form-group" style="margin-top:10px" id="usuarioEmailWrap">
+        <label class="form-label">Email</label>
+        <input type="email" class="form-input" id="usuarioEmailInput" placeholder="Ej: martin@tienda.com" />
+      </div>
+      <div class="form-group" style="margin-top:10px" id="usuarioPassWrap">
+        <label class="form-label">Contraseña <span style="font-weight:400;color:var(--text3)">(mínimo 6 caracteres)</span></label>
+        <input type="password" class="form-input" id="usuarioPassInput" placeholder="••••••" minlength="6" />
+      </div>
+      <div class="form-group" style="margin-top:10px">
+        <label class="form-label">Rol</label>
+        <select class="form-select" id="usuarioRolSelect" style="width:100%">
+          <option value="empleado">Empleado</option>
+          <option value="administrador">Administrador</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-secondary" id="btnCancelarUsuario">Cancelar</button>
+      <button class="btn-primary" id="btnConfirmarUsuario">Crear usuario</button>
     </div>
   </div>
 </div>
