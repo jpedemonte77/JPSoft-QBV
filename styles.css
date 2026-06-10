@@ -1339,7 +1339,7 @@ tr.fila-activa td { background: var(--info-bg); }
   font-weight: 400;
   box-shadow: 0 4px 12px rgba(0,0,0,.08);
 }
-.cliente-nombre-cell { position: relative; }
+.cliente-nombre-cell { position: relative; overflow: visible !important; }
 .cliente-nombre-cell:hover .cliente-tooltip { display: block; }
 .cliente-avatar {
   width: 28px; height: 28px;
