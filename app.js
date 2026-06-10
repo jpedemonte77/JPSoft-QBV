@@ -4532,7 +4532,6 @@ function renderClientesLista() {
             </a>` : ""}
             <button type="button" class="btn-primary cliente-cobrar-btn" data-id="${id}" style="font-size:11.5px;padding:5px 10px">Cobrar</button>
             <button type="button" class="btn-secondary cliente-ver-btn" data-id="${id}" style="font-size:11.5px;padding:5px 10px;background:#E6F1FB;color:#0C447C;border-color:#B5D4F4">Ver</button>
-            <button type="button" class="btn-secondary cliente-editar-btn" data-id="${id}" style="font-size:11.5px;padding:5px 10px">Editar</button>
             <button type="button" class="btn-danger cliente-eliminar-btn" data-id="${id}" style="font-size:11.5px;padding:5px 8px">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
             </button>
@@ -4581,8 +4580,8 @@ function renderClientesLista() {
     </tr>` : "";
 
     return `<tr class="cliente-row" data-id="${id}" data-idx="${idx}" style="cursor:pointer${highlighted ? ";background:var(--bg3)" : ""}">
-      <td class="cliente-nombre-cell" style="font-weight:500;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
-        ${c.nombre||"—"}
+      <td class="cliente-nombre-cell" style="font-weight:500;color:var(--text1);white-space:nowrap;overflow:visible">
+        <span style="display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom">${c.nombre||"—"}</span>
         <div class="cliente-tooltip">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:11.5px">
             ${c.razonSocial ? `<div><div style="color:var(--text3);font-size:10px">Razón Social</div><div style="color:var(--text1)">${c.razonSocial}</div></div>` : ""}
