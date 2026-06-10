@@ -232,7 +232,7 @@ function updateStockBadge() {
     const s = getStockStatus(p);
     return s === "sin-stock" || s === "bajo";
   }).length;
-  const badge = document.getElementById("stockAlertBadge");
+  const badge     = document.getElementById("stockAlertBadge");
   const btnAlerta = document.getElementById("btnFiltroAlerta");
   const btnLabel  = document.getElementById("btnFiltroAlertaLabel");
   if (!badge) return;
@@ -240,12 +240,19 @@ function updateStockBadge() {
     badge.textContent = alertas;
     badge.classList.remove("hidden");
     if (btnAlerta) {
-      btnAlerta.classList.remove("hidden");
-      if (btnLabel) btnLabel.textContent = `Con alerta (${alertas})`;
+      btnAlerta.style.color       = "var(--danger)";
+      btnAlerta.style.borderColor = "rgba(192,57,26,0.3)";
+      btnAlerta.style.background  = soloConAlerta ? "var(--danger-bg)" : "";
     }
+    if (btnLabel) btnLabel.textContent = `Con alerta (${alertas})`;
   } else {
     badge.classList.add("hidden");
-    if (btnAlerta) btnAlerta.classList.add("hidden");
+    if (btnAlerta) {
+      btnAlerta.style.color       = "";
+      btnAlerta.style.borderColor = "";
+      btnAlerta.style.background  = "";
+    }
+    if (btnLabel) btnLabel.textContent = "Con alerta";
     soloConAlerta = false;
   }
 }
