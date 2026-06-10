@@ -5754,3 +5754,157 @@ document.getElementById("btnConfirmarActualizarPrecios")?.addEventListener("clic
     btn.disabled = false; btn.textContent = orig;
   }
 });
+
+// ============================================================
+//  BÚSQUEDA GLOBAL
+// ============================================================
+function abrirBusquedaGlobal() {
+  document.getElementById("globalSearchBtn").style.display    = "none";
+  document.getElementById("globalSearchActive").style.display = "flex";
+  document.getElementById("globalSearchInput").focus();
+}
+
+function cerrarBusquedaGlobal() {
+  document.getElementById("globalSearchBtn").style.display    = "flex";
+  document.getElementById("globalSearchActive").style.display = "none";
+  document.getElementById("globalSearchInput").value = "";
+  document.getElementById("globalSearchResults").style.display = "none";
+}
+
+function renderBusquedaGlobal(query) {
+  const results = document.getElementById("globalSearchResults");
+  if (!query.trim()) { results.style.display = "none"; return; }
+
+  const q = norm(query);
+  let html = "";
+
+  // Productos
+  const prods = allProducts.filter(p =>
+    norm(p.desc||"").includes(q) || norm(String(p.cod||"")).includes(q)
+  ).slice(0, 5);
+
+  if (prods.length) {
+    html += `<div style="padding:6px 12px;background:var(--surface2);font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Productos</div>`;
+    html += prods.map(p => {
+      const venta = Math.round(getPrecioVenta(p));
+      const stock = typeof p.stock === "number" ? `Stock: ${p.stock}` : "";
+      return `<div class="global-search-result" data-tipo="producto" data-id="${p._id}"
+        style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer">
+        <div>
+          <div style="font-size:13px;font-weight:500;color:var(--text1)">${p.desc || "—"}</div>
+          <div style="font-size:11px;color:var(--text3)">${p.proveedor || ""}${stock ? ` · ${stock}` : ""}</div>
+        </div>
+        <div style="font-size:13px;font-weight:500;color:var(--text1)">${fmt(venta)}</div>
+      </div>`;
+    }).join("");
+  }
+
+  // Clientes
+  const clientes = Object.entries(clientesData)
+    .filter(([, c]) => norm(c.nombre||"").includes(q))
+    .slice(0, 4);
+
+  if (clientes.length) {
+    html += `<div style="padding:6px 12px;background:var(--surface2);font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Clientes</div>`;
+    html += clientes.map(([id, c]) => {
+      const saldo = c.saldo || 0;
+      const saldoTxt = saldo < 0
+        ? `<span style="color:var(--danger);font-size:12px">Deuda: ${fmt(Math.abs(saldo))}</span>`
+        : `<span style="color:var(--text3);font-size:12px">Sin deuda</span>`;
+      return `<div class="global-search-result" data-tipo="cliente" data-id="${id}"
+        style="display:flex;align-items:center;justify-content:space-between;padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer">
+        <div style="font-size:13px;color:var(--text1)">${c.nombre}</div>
+        ${saldoTxt}
+      </div>`;
+    }).join("");
+  }
+
+  // Proveedores
+  const provs = Object.entries(proveedores)
+    .filter(([, p]) => norm(p.nombre||"").includes(q))
+    .slice(0, 3);
+
+  if (provs.length) {
+    html += `<div style="padding:6px 12px;background:var(--surface2);font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em">Proveedores</div>`;
+    html += provs.map(([id, p]) => `
+      <div class="global-search-result" data-tipo="proveedor" data-id="${id}"
+        style="display:flex;align-items:center;padding:9px 14px;border-bottom:1px solid var(--border);cursor:pointer">
+        <div style="font-size:13px;color:var(--text1)">${p.nombre}</div>
+      </div>`).join("");
+  }
+
+  if (!html) {
+    html = `<div style="padding:14px;text-align:center;font-size:13px;color:var(--text3)">Sin resultados para "${query}"</div>`;
+  } else {
+    html += `<div style="padding:7px 14px;border-top:1px solid var(--border);text-align:center;font-size:11px;color:var(--text3)">
+      Presioná <kbd style="font-size:10px;background:var(--surface2);border:1px solid var(--border2);border-radius:3px;padding:1px 5px">Enter</kbd> para ir a Productos
+    </div>`;
+  }
+
+  results.innerHTML = html;
+  results.style.display = "block";
+}
+
+// Eventos
+document.getElementById("globalSearchBtn")?.addEventListener("click", abrirBusquedaGlobal);
+
+document.getElementById("globalSearchClear")?.addEventListener("click", cerrarBusquedaGlobal);
+
+document.getElementById("globalSearchInput")?.addEventListener("input", e => {
+  renderBusquedaGlobal(e.target.value);
+});
+
+document.getElementById("globalSearchInput")?.addEventListener("keydown", e => {
+  if (e.key === "Escape") { cerrarBusquedaGlobal(); return; }
+  if (e.key === "Enter") {
+    // Ir a Productos con el texto buscado
+    cerrarBusquedaGlobal();
+    document.querySelector('[data-view="productos"]')?.click();
+    setTimeout(() => {
+      const input = document.getElementById("prodSearchInput");
+      if (input) { input.value = e.target.value; input.dispatchEvent(new Event("input")); }
+    }, 100);
+  }
+});
+
+// Click en resultado
+document.getElementById("globalSearchResults")?.addEventListener("click", e => {
+  const row = e.target.closest(".global-search-result");
+  if (!row) return;
+  const tipo = row.dataset.tipo;
+  const id   = row.dataset.id;
+  cerrarBusquedaGlobal();
+
+  if (tipo === "producto") {
+    document.querySelector('[data-view="productos"]')?.click();
+    setTimeout(() => {
+      const p = allProducts.find(x => x._id === id);
+      if (p) {
+        const input = document.getElementById("prodSearchInput");
+        if (input) { input.value = p.desc; input.dispatchEvent(new Event("input")); }
+      }
+    }, 100);
+  }
+  if (tipo === "cliente") {
+    document.querySelector('[data-view="clientes"]')?.click();
+    setTimeout(() => renderClienteDetalle(id), 100);
+  }
+  if (tipo === "proveedor") {
+    document.querySelector('[data-view="proveedores"]')?.click();
+  }
+});
+
+// Cerrar al hacer click fuera
+document.addEventListener("click", e => {
+  if (!document.getElementById("globalSearchWrap")?.contains(e.target)) {
+    cerrarBusquedaGlobal();
+  }
+});
+
+// Atajo Ctrl+F
+document.addEventListener("keydown", e => {
+  if (e.key === "f" && e.ctrlKey && !e.shiftKey) {
+    e.preventDefault();
+    abrirBusquedaGlobal();
+  }
+});
