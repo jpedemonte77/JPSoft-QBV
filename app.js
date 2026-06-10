@@ -4551,9 +4551,16 @@ function abrirModalCliente(id = null) {
   const c = id ? clientesData[id] : null;
   document.getElementById("clienteEditId").value       = id || "";
   document.getElementById("modalClienteTitulo").textContent = id ? "Editar cliente" : "Nuevo cliente";
-  document.getElementById("clienteNombreInput").value  = c?.nombre || "";
-  document.getElementById("clienteTelInput").value     = c?.telefono || "";
-  document.getElementById("btnConfirmarCliente").textContent = id ? "Guardar cambios" : "Guardar";
+  document.getElementById("clienteNombreInput").value      = c?.nombre       || "";
+  document.getElementById("clienteTelInput").value         = c?.telefono     || "";
+  document.getElementById("clienteEmailInput").value       = c?.email        || "";
+  document.getElementById("clienteRazonSocialInput").value = c?.razonSocial  || "";
+  document.getElementById("clienteIvaSelect").value        = c?.iva          || "";
+  document.getElementById("clienteCuitInput").value        = c?.cuit         || "";
+  document.getElementById("clienteDniInput").value         = c?.dni          || "";
+  document.getElementById("clienteDomicilioInput").value   = c?.domicilio    || "";
+  document.getElementById("clienteLocalidadInput").value   = c?.localidad    || "";
+  document.getElementById("btnConfirmarCliente").textContent = id ? "Guardar cambios" : "Guardar cliente";
   document.getElementById("modalCliente").classList.remove("hidden");
   setTimeout(() => document.getElementById("clienteNombreInput").focus(), 80);
 }
@@ -4566,18 +4573,27 @@ document.getElementById("closeModalCliente")?.addEventListener("click",  cerrarM
 document.getElementById("btnCancelarCliente")?.addEventListener("click", cerrarModalCliente);
 
 document.getElementById("btnConfirmarCliente")?.addEventListener("click", async () => {
-  const nombre = document.getElementById("clienteNombreInput").value.trim();
+  const nombre     = document.getElementById("clienteNombreInput").value.trim();
   if (!nombre) { showToast("Ingresá un nombre.", "error"); return; }
-  const tel  = document.getElementById("clienteTelInput").value.trim();
-  const id   = document.getElementById("clienteEditId").value;
+  const tel        = document.getElementById("clienteTelInput").value.trim();
+  const email      = document.getElementById("clienteEmailInput").value.trim();
+  const razonSocial= document.getElementById("clienteRazonSocialInput").value.trim();
+  const iva        = document.getElementById("clienteIvaSelect").value;
+  const cuit       = document.getElementById("clienteCuitInput").value.trim();
+  const dni        = document.getElementById("clienteDniInput").value.trim();
+  const domicilio  = document.getElementById("clienteDomicilioInput").value.trim();
+  const localidad  = document.getElementById("clienteLocalidadInput").value.trim();
+  const id         = document.getElementById("clienteEditId").value;
+
+  const datos = { nombre, telefono: tel, email, razonSocial, iva, cuit, dni, domicilio, localidad };
 
   if (id) {
-    await updateDoc(doc(db, "clientes", id), { nombre, telefono: tel });
+    await updateDoc(doc(db, "clientes", id), datos);
     registrarLog("cliente", `Cliente editado — ${nombre}`);
     showToast("Cliente actualizado ✓", "success");
   } else {
     const nuevoRef = doc(collection(db, "clientes"));
-    await setDoc(nuevoRef, { nombre, telefono: tel, saldo: 0, creado: Date.now(), ultimoMov: Date.now() });
+    await setDoc(nuevoRef, { ...datos, saldo: 0, creado: Date.now(), ultimoMov: Date.now() });
     registrarLog("cliente", `Cliente creado — ${nombre}`);
     showToast(`Cliente creado ✓ — ${nombre}`, "success");
   }
@@ -6484,3 +6500,91 @@ async function cargarCotizacionDolar() {
 
 // Cargar al iniciar (con un pequeño delay para no bloquear el boot)
 setTimeout(cargarCotizacionDolar, 2000);
+
+// ============================================================
+//  EXPORTAR / IMPRIMIR CLIENTES
+// ============================================================
+document.getElementById("btnExportarClientesExcel")?.addEventListener("click", () => {
+  const lista = Object.values(clientesData).sort((a,b) => (a.nombre||"").localeCompare(b.nombre||""));
+  if (!lista.length) { showToast("No hay clientes para exportar.", "warning"); return; }
+
+  const data = [["Nombre","Razón Social","WhatsApp","Email","Condición IVA","CUIT/CUIL","DNI","Domicilio","Localidad","Saldo"]];
+  lista.forEach(c => {
+    data.push([
+      c.nombre || "", c.razonSocial || "", c.telefono || "", c.email || "",
+      c.iva || "", c.cuit || "", c.dni || "", c.domicilio || "", c.localidad || "",
+      c.saldo || 0
+    ]);
+  });
+
+  exportarExcel([{ nombre: "Clientes", data, colsMoney: [9] }], `JPSoft_Tienda_Clientes_${todayKey()}.xlsx`);
+});
+
+document.getElementById("btnImprimirClientesPDF")?.addEventListener("click", async () => {
+  const lista = Object.values(clientesData).sort((a,b) => (a.nombre||"").localeCompare(b.nombre||""));
+  if (!lista.length) { showToast("No hay clientes para imprimir.", "warning"); return; }
+
+  const now = new Date().toLocaleDateString("es-AR", { day:"2-digit", month:"2-digit", year:"numeric" });
+  const filas = lista.map(c => {
+    const saldoColor = (c.saldo||0) < 0 ? "#A32D2D" : "#111";
+    return `<tr style="border-bottom:1px solid #f0f0f0">
+      <td style="padding:5px 8px;font-size:12px;font-weight:500">${c.nombre||"—"}</td>
+      <td style="padding:5px 8px;font-size:11px;color:#666">${c.razonSocial||"—"}</td>
+      <td style="padding:5px 8px;font-size:11px;color:#666">${c.telefono||"—"}</td>
+      <td style="padding:5px 8px;font-size:11px;color:#666">${c.localidad||"—"}</td>
+      <td style="padding:5px 8px;font-size:11px;color:#666">${c.iva||"—"}</td>
+      <td style="padding:5px 8px;text-align:right;font-weight:600;color:${saldoColor}">${fmt(c.saldo||0)}</td>
+    </tr>`;
+  }).join("");
+
+  const content = `
+    <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:#111;padding:2rem;max-width:720px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+        <div style="font-size:18px;font-weight:600">JPSoft | Tienda</div>
+        <div style="font-size:11px;color:#888">Generado el ${now}</div>
+      </div>
+      <div style="font-size:12px;color:#888;margin-bottom:1.25rem">Listado de clientes</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="background:#f5f5f5;font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.05em">
+            <th style="padding:6px 8px;text-align:left;font-weight:500;border-bottom:1px solid #eee">Nombre</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:500;border-bottom:1px solid #eee">Razón Social</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:500;border-bottom:1px solid #eee">WhatsApp</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:500;border-bottom:1px solid #eee">Localidad</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:500;border-bottom:1px solid #eee">Cond. IVA</th>
+            <th style="padding:6px 8px;text-align:right;font-weight:500;border-bottom:1px solid #eee">Saldo</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>
+    </div>`;
+
+  const btn  = document.getElementById("btnImprimirClientesPDF");
+  const orig = btn.innerHTML;
+  btn.disabled = true; btn.textContent = "Generando…";
+
+  const container = document.createElement("div");
+  container.style.cssText = "position:fixed;left:-9999px;top:0;width:760px;background:#fff";
+  container.innerHTML = content;
+  document.body.appendChild(container);
+
+  try {
+    const canvas = await html2canvas(container, { scale: 2, useCORS: true, backgroundColor: "#fff" });
+    const { jsPDF } = window.jspdf;
+    const pdf  = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
+    const imgW = 297;
+    const imgH = (canvas.height * imgW) / canvas.width;
+    const pages = Math.ceil(imgH / 210);
+    for (let i = 0; i < pages; i++) {
+      if (i > 0) pdf.addPage();
+      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, -i * 210, imgW, imgH);
+    }
+    pdf.save(`JPSoft_Tienda_Clientes_${todayKey()}.pdf`);
+    showToast("PDF generado ✓", "success");
+  } catch(err) {
+    showToast("Error al generar PDF: " + err.message, "error");
+  } finally {
+    document.body.removeChild(container);
+    btn.disabled = false; btn.innerHTML = orig;
+  }
+});
