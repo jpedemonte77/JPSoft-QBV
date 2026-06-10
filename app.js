@@ -2391,6 +2391,7 @@ function renderProductosTabla() {
       </td>
       <td>
         <div style="display:flex;gap:5px;justify-content:flex-end">
+          <button class="btn-secondary" style="font-size:11px;padding:4px 8px" onclick="window._verVentasProducto('${p._id}','${(p.desc||'').replace(/'/g,'&#39;')}')">Ventas</button>
           <button class="btn-secondary" style="font-size:11px;padding:4px 8px" data-edit onclick="window._editarProducto('${p._id}')">Editar</button>
           <button class="btn-danger" style="font-size:11px;padding:4px 7px" onclick="window._eliminarProducto('${p._id}','${(p.desc||'').replace(/'/g,'&#39;')}')">🗑</button>
         </div>
@@ -2586,6 +2587,7 @@ function abrirModalProducto(id) {
   document.getElementById("pf-stockMax").value  = p?.stockMax ?? "";
   document.getElementById("pf-rubro").value     = p?.rubro || "";
   document.getElementById("pf-activo").checked  = p?.activo !== false;
+  document.getElementById("pf-obs") && (document.getElementById("pf-obs").value = p?.obs || "");
 
   // IVA
   const iva = p?.iva ?? 0;
@@ -2659,6 +2661,7 @@ document.getElementById("btnGuardarProducto").addEventListener("click", async ()
     id:        document.getElementById("pf-id").value.trim(),
     desc, cod: document.getElementById("pf-cod").value.trim(),
     lista, iva, rubro,
+    obs:      document.getElementById("pf-obs")?.value.trim() || "",
     stock:    isNaN(stock)    ? null : stock,
     stockMin: isNaN(stockMin) ? 5    : stockMin,
     stockMax: isNaN(stockMax) ? null : stockMax,
@@ -6861,3 +6864,120 @@ document.getElementById("btnImprimirClientesPDF")?.addEventListener("click", asy
     btn.disabled = false; btn.innerHTML = orig;
   }
 });
+
+// ============================================================
+//  VALORIZAR STOCK
+// ============================================================
+document.getElementById("btnValorizarStock")?.addEventListener("click", () => {
+  const prods = allProducts.filter(p => p.activo !== false && typeof p.stock === "number" && p.stock > 0);
+  let totalLista = 0, totalVenta = 0, totalUnits = 0;
+  prods.forEach(p => {
+    const units = p.stock || 0;
+    totalLista  += (p.lista || 0) * units;
+    totalVenta  += getPrecioVenta(p) * units;
+    totalUnits  += units;
+  });
+  const ganancia = totalVenta - totalLista;
+  document.getElementById("valStockLista").textContent    = fmt(Math.round(totalLista));
+  document.getElementById("valStockVenta").textContent    = fmt(Math.round(totalVenta));
+  document.getElementById("valStockProds").textContent    = prods.length;
+  document.getElementById("valStockUnits").textContent    = totalUnits;
+  document.getElementById("valStockGanancia").textContent = fmt(Math.round(ganancia));
+  document.getElementById("modalValorizarStock").classList.remove("hidden");
+});
+document.getElementById("closeModalValorizarStock")?.addEventListener("click",  () => document.getElementById("modalValorizarStock").classList.add("hidden"));
+document.getElementById("closeModalValorizarStock2")?.addEventListener("click", () => document.getElementById("modalValorizarStock").classList.add("hidden"));
+document.getElementById("modalValorizarStock")?.addEventListener("click", e => { if (e.target === e.currentTarget) e.currentTarget.classList.add("hidden"); });
+
+// ============================================================
+//  VER VENTAS POR PRODUCTO
+// ============================================================
+let vpProdId   = null;
+let vpPeriodo  = "7";
+
+window._verVentasProducto = function(id, desc) {
+  vpProdId  = id;
+  vpPeriodo = "7";
+  document.getElementById("modalVentasProdNombre").textContent = desc;
+  // Resetear chips
+  document.querySelectorAll(".vp-periodo").forEach(b => {
+    const active = b.dataset.periodo === vpPeriodo;
+    b.style.background = active ? "var(--accent)" : "var(--surface2)";
+    b.style.color      = active ? "#fff" : "var(--text2)";
+  });
+  renderVentasProducto();
+  document.getElementById("modalVentasProducto").classList.remove("hidden");
+};
+
+function renderVentasProducto() {
+  const p    = allProducts.find(x => x._id === vpProdId);
+  const desc = p?.desc || "";
+  const now  = new Date();
+  let desde;
+  if (vpPeriodo === "7")    desde = new Date(now - 7 * 86400000);
+  else if (vpPeriodo === "30") desde = new Date(now - 30 * 86400000);
+  else if (vpPeriodo === "mes")  desde = new Date(now.getFullYear(), now.getMonth(), 1);
+  else desde = new Date(now.getFullYear(), 0, 1);
+
+  const ventas = [];
+  Object.entries(cajaData).forEach(([fecha, dia]) => {
+    const [y, m, d] = fecha.split("-").map(Number);
+    const fechaDate = new Date(y, m - 1, d);
+    if (fechaDate < desde) return;
+    ["manana", "tarde"].forEach(turno => {
+      Object.values(dia[turno]?.ventas || {}).forEach(v => {
+        (v.items || []).forEach(item => {
+          const matchDesc = (item.desc || "").toLowerCase() === desc.toLowerCase();
+          const matchId   = vpProdId && item.prodId === vpProdId;
+          if (matchDesc || matchId) {
+            ventas.push({ fecha, hora: v.hora || "", qty: item.qty || 1, precioUnit: item.precioUnit || 0, subtotal: item.subtotal || 0 });
+          }
+        });
+      });
+    });
+  });
+
+  ventas.sort((a, b) => b.fecha.localeCompare(a.fecha) || b.hora.localeCompare(a.hora));
+
+  const totalUnidades = ventas.reduce((s, v) => s + v.qty, 0);
+  const totalRecaudado = ventas.reduce((s, v) => s + v.subtotal, 0);
+  document.getElementById("vpStatUnidades").textContent = totalUnidades;
+  document.getElementById("vpStatTrans").textContent    = ventas.length;
+  document.getElementById("vpStatTotal").textContent    = fmt(Math.round(totalRecaudado));
+
+  const sub = p ? `${p.proveedor || ""} · Stock actual: ${p.stock ?? "—"}` : "";
+  document.getElementById("modalVentasProdSub").textContent = sub;
+
+  const tbody = document.getElementById("vpTableBody");
+  if (!ventas.length) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty-row">Sin ventas en el período.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = ventas.map(v => {
+    const [fy, fm, fd] = v.fecha.split("-");
+    return `<tr>
+      <td style="font-size:12px;font-family:'DM Mono',monospace">${parseInt(fd)}/${parseInt(fm)}/${fy}</td>
+      <td style="font-size:12px;color:var(--text3)">${v.hora}</td>
+      <td class="num" style="font-weight:600">${v.qty}</td>
+      <td class="num">${fmt(v.precioUnit)}</td>
+      <td class="num" style="font-weight:600">${fmt(v.subtotal)}</td>
+    </tr>`;
+  }).join("");
+}
+
+// Chips de período
+document.getElementById("modalVentasProducto")?.addEventListener("click", e => {
+  const chip = e.target.closest(".vp-periodo");
+  if (chip) {
+    vpPeriodo = chip.dataset.periodo;
+    document.querySelectorAll(".vp-periodo").forEach(b => {
+      const active = b.dataset.periodo === vpPeriodo;
+      b.style.background = active ? "var(--accent)" : "var(--surface2)";
+      b.style.color      = active ? "#fff" : "var(--text2)";
+    });
+    renderVentasProducto();
+  }
+  if (e.target === e.currentTarget) e.currentTarget.classList.add("hidden");
+});
+document.getElementById("closeModalVentasProducto")?.addEventListener("click",  () => document.getElementById("modalVentasProducto").classList.add("hidden"));
+document.getElementById("closeModalVentasProducto2")?.addEventListener("click", () => document.getElementById("modalVentasProducto").classList.add("hidden"));
