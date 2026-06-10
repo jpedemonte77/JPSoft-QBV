@@ -1593,33 +1593,33 @@
       <span class="modal-title" id="modalClienteTitulo">Nuevo cliente</span>
       <button class="modal-close" id="closeModalCliente">✕</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" style="padding:10px 16px">
       <input type="hidden" id="clienteEditId" />
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="form-group">
-          <label class="form-label">Nombre <span style="color:var(--danger)">*</span></label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">Nombre <span style="color:var(--danger)">*</span></label>
           <input type="text" class="form-input" id="clienteNombreInput" placeholder="Ej: Martín González" maxlength="60" />
         </div>
-        <div class="form-group">
-          <label class="form-label">Razón Social</label>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">Razón Social</label>
           <input type="text" class="form-input" id="clienteRazonSocialInput" placeholder="Ej: González S.R.L." maxlength="80" />
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
-        <div class="form-group">
-          <label class="form-label">WhatsApp</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">WhatsApp</label>
           <input type="tel" class="form-input" id="clienteTelInput" placeholder="Ej: 3415551234" maxlength="20" />
         </div>
-        <div class="form-group">
-          <label class="form-label">Email</label>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">Email</label>
           <input type="email" class="form-input" id="clienteEmailInput" placeholder="Ej: martin@mail.com" maxlength="80" />
         </div>
       </div>
 
-      <div class="form-group" style="margin-top:10px">
-        <label class="form-label">Condición frente al IVA</label>
+      <div class="form-group" style="margin-top:8px;margin-bottom:0">
+        <label class="form-label" style="margin-bottom:3px">Condición frente al IVA</label>
         <select class="form-select" id="clienteIvaSelect" style="width:100%">
           <option value="">Seleccioná...</option>
           <option>IVA Responsable Inscripto</option>
@@ -1636,29 +1636,29 @@
         </select>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
-        <div class="form-group">
-          <label class="form-label">CUIT / CUIL</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">CUIT / CUIL</label>
           <input type="text" class="form-input" id="clienteCuitInput" placeholder="Ej: 20-12345678-9" maxlength="15" />
         </div>
-        <div class="form-group">
-          <label class="form-label">DNI</label>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">DNI</label>
           <input type="text" class="form-input" id="clienteDniInput" placeholder="Ej: 30.123.456" maxlength="12" />
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
-        <div class="form-group">
-          <label class="form-label">Domicilio</label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">Domicilio</label>
           <input type="text" class="form-input" id="clienteDomicilioInput" placeholder="Ej: San Martín 1234" maxlength="100" />
         </div>
-        <div class="form-group">
-          <label class="form-label">Localidad</label>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">Localidad</label>
           <input type="text" class="form-input" id="clienteLocalidadInput" placeholder="Ej: Rosario" maxlength="60" />
         </div>
       </div>
     </div>
-    <div class="modal-footer">
+    <div class="modal-footer" style="padding:8px 16px">
       <button class="btn-secondary" id="btnCancelarCliente">Cancelar</button>
       <button class="btn-primary" id="btnConfirmarCliente">Guardar cliente</button>
     </div>
@@ -1859,6 +1859,30 @@
     <div class="modal-footer">
       <button class="btn-secondary" id="btnCancelarUsuario">Cancelar</button>
       <button class="btn-primary" id="btnConfirmarUsuario">Crear usuario</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     MODAL: VER CLIENTE
+══════════════════════════════ -->
+<div class="modal-overlay hidden" id="modalVerCliente">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div id="verClienteAvatar" style="width:32px;height:32px;border-radius:50%;background:#FCEBEB;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:#A32D2D;flex-shrink:0"></div>
+        <div>
+          <div class="modal-title" id="verClienteNombre">—</div>
+          <div id="verClienteSaldo" style="font-size:11px;color:var(--danger)"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn-secondary" id="btnVerClienteEditar" style="font-size:12px;padding:4px 10px">Editar</button>
+        <button class="modal-close" id="closeModalVerCliente">✕</button>
+      </div>
+    </div>
+    <div class="modal-body" style="padding:12px 16px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px" id="verClienteGrid"></div>
     </div>
   </div>
 </div>
