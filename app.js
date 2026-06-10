@@ -3068,9 +3068,129 @@ function generarReporte() {
         </tr></thead><tbody>${rows}</tbody></table>`;
     }
   }
+
+  // Comparación con período anterior
+  if (periodo !== "custom") renderReporteComparacion(periodo, desde, hasta, tot, ventas.length, totE + totM + totD + totC, tot > 0 ? Math.round(tot / Math.max(ventas.length, 1)) : 0, totE, totM + totD);
+  else ocultarReporteComparacion();
 }
 
-// ── Exportar Reporte PDF ──
+// ── Comparación de períodos ──
+function calcVentasPeriodo(desde, hasta) {
+  const keys   = dateRange(desde, hasta);
+  let tot = 0, cant = 0, totE = 0, totDigital = 0, gastos = 0;
+  keys.forEach(k => {
+    const dia = cajaData[k]; if (!dia) return;
+    ["manana","tarde"].forEach(turno => {
+      Object.values(dia[turno]?.ventas || {}).forEach(v => {
+        tot += v.total || 0; cant++;
+        if (v.metodo === "efectivo") totE += v.total || 0;
+        else totDigital += v.total || 0;
+      });
+    });
+    Object.values(dia.gastos || {}).forEach(g => { gastos += g.monto || 0; });
+  });
+  return { tot, cant, totE, totDigital, gastos, promedio: cant > 0 ? Math.round(tot / cant) : 0 };
+}
+
+function getPeriodAnterior(periodo) {
+  const hoy  = new Date();
+  if (periodo === "hoy") {
+    const ayer = new Date(hoy); ayer.setDate(ayer.getDate() - 1);
+    const k = ayer.toISOString().slice(0,10);
+    return { desde: k, hasta: k, label: "Ayer" };
+  }
+  if (periodo === "semana") {
+    const lun = new Date(hoy); lun.setDate(hoy.getDate() - hoy.getDay() + 1 - 7);
+    const dom = new Date(lun); dom.setDate(lun.getDate() + 6);
+    return { desde: lun.toISOString().slice(0,10), hasta: dom.toISOString().slice(0,10), label: "Semana anterior" };
+  }
+  if (periodo === "mes") {
+    const primerMesAnt = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+    const ultiMesAnt   = new Date(hoy.getFullYear(), hoy.getMonth(), 0);
+    const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+    return { desde: primerMesAnt.toISOString().slice(0,10), hasta: ultiMesAnt.toISOString().slice(0,10), label: meses[primerMesAnt.getMonth()] };
+  }
+  if (periodo === "anio") {
+    const anioAnt = hoy.getFullYear() - 1;
+    return { desde: `${anioAnt}-01-01`, hasta: `${anioAnt}-12-31`, label: `${anioAnt}` };
+  }
+  return null;
+}
+
+function labelPeriodo(periodo) {
+  if (periodo === "hoy")   return "Hoy";
+  if (periodo === "semana") return "Esta semana";
+  if (periodo === "mes") {
+    const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+    return meses[new Date().getMonth()];
+  }
+  if (periodo === "anio") return String(new Date().getFullYear());
+  return periodo;
+}
+
+function varBadge(actual, anterior) {
+  if (!anterior) return "";
+  const diff = Math.round(((actual - anterior) / anterior) * 100);
+  const sube = diff >= 0;
+  const color = sube ? { bg: "#EAF3DE", text: "#3B6D11" } : { bg: "#FCEBEB", text: "#A32D2D" };
+  const arrow = sube
+    ? `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>`
+    : `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>`;
+  return `<div style="display:flex;align-items:center;gap:3px;padding:2px 7px;border-radius:10px;background:${color.bg};color:${color.text};font-size:12px;font-weight:500">
+    ${arrow}${sube ? "+" : ""}${diff}%
+  </div>`;
+}
+
+function renderReporteComparacion(periodo, desde, hasta, tot, cant, _tot, promedio, totE, totDigital) {
+  const ant = getPeriodAnterior(periodo);
+  if (!ant) { ocultarReporteComparacion(); return; }
+
+  const a = calcVentasPeriodo(ant.desde, ant.hasta);
+  const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  const hoy   = new Date();
+
+  // Recalcular gastos período actual
+  let gastosAct = 0;
+  dateRange(desde, hasta).forEach(k => {
+    Object.values(cajaData[k]?.gastos || {}).forEach(g => { gastosAct += g.monto || 0; });
+  });
+
+  const metricas = [
+    { label: "Ventas totales",       actual: tot,        anterior: a.tot,        fmt: v => fmt(v), danger: false },
+    { label: "Transacciones",        actual: cant,       anterior: a.cant,       fmt: v => String(v), danger: false },
+    { label: "Gastos",               actual: gastosAct,  anterior: a.gastos,     fmt: v => fmt(v), danger: true },
+    { label: "Ticket promedio",      actual: promedio,   anterior: a.promedio,   fmt: v => fmt(v), danger: false },
+    { label: "Efectivo",             actual: totE,       anterior: a.totE,       fmt: v => fmt(v), danger: false },
+    { label: "Digital (MP + débito)",actual: totDigital, anterior: a.totDigital, fmt: v => fmt(v), danger: false },
+  ];
+
+  const grid  = document.getElementById("reporteComparacionGrid");
+  const banda = document.getElementById("reporteComparacionBanda");
+  const p1    = document.getElementById("reporteComparacionP1");
+  const p2    = document.getElementById("reporteComparacionP2");
+
+  if (p1) p1.textContent = labelPeriodo(periodo);
+  if (p2) p2.textContent = ant.label;
+  if (banda) { banda.style.display = "flex"; }
+
+  grid.style.display = "grid";
+  grid.innerHTML = metricas.map(m => `
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px">
+      <div style="font-size:12px;color:var(--text3);margin-bottom:6px">${m.label}</div>
+      <div style="font-size:24px;font-weight:500;color:${m.danger && m.actual > 0 ? "var(--danger)" : "var(--text1)"};margin-bottom:6px">${m.fmt(m.actual)}</div>
+      <div style="display:flex;align-items:center;gap:6px">
+        ${varBadge(m.actual, m.anterior)}
+        <span style="font-size:11px;color:var(--text3)">vs ${m.fmt(m.anterior)}</span>
+      </div>
+    </div>`).join("");
+}
+
+function ocultarReporteComparacion() {
+  const grid  = document.getElementById("reporteComparacionGrid");
+  const banda = document.getElementById("reporteComparacionBanda");
+  if (grid)  grid.style.display  = "none";
+  if (banda) banda.style.display = "none";
+}
 document.getElementById("btnExportarReportePDF")?.addEventListener("click", async () => {
   const rd = window._reporteData;
   if (!rd) return;
