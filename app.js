@@ -4559,8 +4559,9 @@ function renderClientesLista() {
       </td>
     </tr>` : "";
 
-    return `<tr class="cliente-row" data-id="${id}" data-idx="${idx}" style="cursor:pointer${highlighted ? ";background:var(--bg3)" : ""}">
-      <td class="cliente-nombre-cell" style="font-weight:500;color:var(--text1);white-space:nowrap;overflow:visible">
+    const tdStyle = highlighted ? "background:var(--bg3)" : "";
+    return `<tr class="cliente-row" data-id="${id}" data-idx="${idx}" style="cursor:pointer">
+      <td class="cliente-nombre-cell" style="font-weight:500;color:var(--text1);white-space:nowrap;overflow:visible;${tdStyle}">
         <span style="display:inline-block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:bottom">${c.nombre||"—"}</span>
         <div class="cliente-tooltip">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;font-size:11.5px">
@@ -4573,11 +4574,11 @@ function renderClientesLista() {
           </div>
         </div>
       </td>
-      <td style="font-size:12px;color:var(--text2);white-space:nowrap">${c.telefono||"—"}</td>
-      <td style="font-size:12px;color:var(--text2);white-space:nowrap">${c.localidad||"—"}</td>
-      <td style="white-space:nowrap"><span style="font-size:11px;padding:2px 7px;border-radius:10px;background:var(--surface2);color:var(--text2)">${ivaShort}</span></td>
-      <td class="num" style="font-weight:600;color:${saldoColor};white-space:nowrap">${saldoTxt}</td>
-      <td style="text-align:center;padding:0 8px">
+      <td style="font-size:12px;color:var(--text2);white-space:nowrap;${tdStyle}">${c.telefono||"—"}</td>
+      <td style="font-size:12px;color:var(--text2);white-space:nowrap;${tdStyle}">${c.localidad||"—"}</td>
+      <td style="white-space:nowrap;${tdStyle}"><span style="font-size:11px;padding:2px 7px;border-radius:10px;background:var(--surface2);color:var(--text2)">${ivaShort}</span></td>
+      <td class="num" style="font-weight:600;color:${saldoColor};white-space:nowrap;${tdStyle}">${saldoTxt}</td>
+      <td style="text-align:center;padding:0 8px;${tdStyle}">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transform:rotate(${expanded?"90":"0"}deg);transition:transform .2s;color:var(--text3)"><polyline points="9 18 15 12 9 6"/></svg>
       </td>
     </tr>${expandRow}`;
