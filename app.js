@@ -569,7 +569,7 @@ document.querySelectorAll(".nav-item[data-view]").forEach(btn => {
     if (view === "historial-precios") { renderHistorialPrecios(); renderHistorialVentas(); }
     if (view === "actividad")         renderActividad();
     if (view === "gastos")            renderGastos();
-    if (view === "clientes")          renderClientesLista();
+    if (view === "clientes")          { renderClientesLista(); setTimeout(() => document.getElementById("clientesLista")?.focus(), 100); }
     if (view === "compras")           renderCompras();
   });
 });
@@ -4612,10 +4612,12 @@ document.getElementById("clientesLista")?.addEventListener("keydown", e => {
     e.preventDefault();
     clienteFilaActiva = Math.min(clienteFilaActiva + 1, clientes.length - 1);
     renderClientesLista();
+    document.querySelector(`.cliente-row[data-idx="${clienteFilaActiva}"]`)?.scrollIntoView({ block: "nearest" });
   } else if (e.key === "ArrowUp") {
     e.preventDefault();
     clienteFilaActiva = Math.max(clienteFilaActiva - 1, 0);
     renderClientesLista();
+    document.querySelector(`.cliente-row[data-idx="${clienteFilaActiva}"]`)?.scrollIntoView({ block: "nearest" });
   } else if (e.key === "Enter" && clienteFilaActiva >= 0) {
     e.preventDefault();
     toggleClienteExpand(clientes[clienteFilaActiva][0]);
