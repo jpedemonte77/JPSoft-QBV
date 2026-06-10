@@ -1049,7 +1049,8 @@ mark { background: #fef9c3; color: #854d0e; border-radius: 2px; padding: 0 1px; 
 .productos-search-wrap {
   position: relative;
   flex: 1;
-  min-width: 200px;
+  min-width: 160px;
+  max-width: 280px;
 }
 
 .productos-table-wrap {
