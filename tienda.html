@@ -135,6 +135,26 @@
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
       </button>
       <h1 class="topbar-title" id="topbar-title">Inicio</h1>
+
+      <!-- Buscador global -->
+      <div id="globalSearchWrap" style="position:relative;flex:1;max-width:300px;margin:0 16px">
+        <div id="globalSearchBtn" style="display:flex;align-items:center;gap:7px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:6px 10px;cursor:text;width:100%">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--text3);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <span style="font-size:13px;color:var(--text3);flex:1">Buscar...</span>
+          <span style="font-size:10px;color:var(--text3);background:var(--surface);border:1px solid var(--border2);border-radius:3px;padding:1px 5px">Ctrl+F</span>
+        </div>
+        <div id="globalSearchActive" style="display:none;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--accent);border-radius:var(--radius-sm);padding:6px 10px;width:100%;box-sizing:border-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--accent);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input type="text" id="globalSearchInput" placeholder="Buscar productos, clientes, proveedores..." autocomplete="off"
+            style="border:none;outline:none;font-size:13px;background:transparent;flex:1;color:var(--text);font-family:inherit;min-width:0" />
+          <button type="button" id="globalSearchClear" style="background:none;border:none;cursor:pointer;padding:2px;color:var(--text3);display:flex;align-items:center">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <!-- Dropdown resultados -->
+        <div id="globalSearchResults" style="display:none;position:absolute;top:calc(100% + 6px);left:0;right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 4px 16px rgba(0,0,0,.1);overflow:hidden;z-index:1000;max-height:400px;overflow-y:auto"></div>
+      </div>
+
       <div class="topbar-actions">
         <div class="user-info" id="user-info">
           <div class="user-avatar" id="user-avatar"></div>
