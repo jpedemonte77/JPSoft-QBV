@@ -5850,22 +5850,54 @@ document.getElementById("globalSearchBtn")?.addEventListener("click", abrirBusqu
 
 document.getElementById("globalSearchClear")?.addEventListener("click", cerrarBusquedaGlobal);
 
+let globalSearchFila = -1;
+
 document.getElementById("globalSearchInput")?.addEventListener("input", e => {
+  globalSearchFila = -1;
   renderBusquedaGlobal(e.target.value);
 });
 
 document.getElementById("globalSearchInput")?.addEventListener("keydown", e => {
+  const results = document.getElementById("globalSearchResults");
+  const filas   = results?.querySelectorAll(".global-search-result");
+
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    globalSearchFila = Math.min(globalSearchFila + 1, (filas?.length || 1) - 1);
+    resaltarFilaGlobal(filas);
+    return;
+  }
+  if (e.key === "ArrowUp") {
+    e.preventDefault();
+    globalSearchFila = Math.max(globalSearchFila - 1, 0);
+    resaltarFilaGlobal(filas);
+    return;
+  }
   if (e.key === "Escape") { cerrarBusquedaGlobal(); return; }
   if (e.key === "Enter") {
-    // Ir a Productos con el texto buscado
+    // Si hay una fila seleccionada, activarla
+    if (globalSearchFila >= 0 && filas && filas[globalSearchFila]) {
+      filas[globalSearchFila].click();
+      return;
+    }
+    // Si no, ir a Productos con el texto
+    const val = e.target.value;
     cerrarBusquedaGlobal();
     document.querySelector('[data-view="productos"]')?.click();
     setTimeout(() => {
       const input = document.getElementById("prodSearchInput");
-      if (input) { input.value = e.target.value; input.dispatchEvent(new Event("input")); }
+      if (input) { input.value = val; input.dispatchEvent(new Event("input")); }
     }, 100);
   }
 });
+
+function resaltarFilaGlobal(filas) {
+  if (!filas) return;
+  filas.forEach((f, i) => {
+    f.style.background = i === globalSearchFila ? "var(--bg3)" : "";
+    if (i === globalSearchFila) f.scrollIntoView({ block: "nearest" });
+  });
+}
 
 // Click en resultado
 document.getElementById("globalSearchResults")?.addEventListener("click", e => {
