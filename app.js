@@ -1430,13 +1430,9 @@ document.getElementById("btnConfirmarVenta").addEventListener("click", () => {
   // Limpiar nota al abrir
   const notaInput = document.getElementById("notaVentaInput");
   if (notaInput) notaInput.value = "";
-  document.querySelectorAll(".nota-chip").forEach(b => b.classList.remove("active"));
-  // Cerrar toggle de nota y resetear
-  const notaBody    = document.getElementById("notaToggleBody");
-  const notaChevron = document.getElementById("notaToggleChevron");
-  if (notaBody)    { notaBody.style.display = "none"; }
-  if (notaChevron) { notaChevron.style.transform = ""; }
-  actualizarCobroClienteWrap(null);
+  // Resetear tipo de registro
+  ventaTipoActivo = "";
+  document.querySelectorAll(".venta-tipo-chip").forEach(b => b.style.fontWeight = "400");
 
   // Popular selector de cliente
   const sel = document.getElementById("ventaClienteSelect");
@@ -1561,17 +1557,21 @@ document.getElementById("ventaClienteSelect")?.addEventListener("change", e => {
   if (!id) {
     document.getElementById("ventaClienteSelector").style.display     = "flex";
     document.getElementById("ventaClienteSeleccionado").style.display = "none";
+    ventaTipoActivo = "";
     return;
   }
   const c = clientesData[id];
   if (!c) return;
   const inic = getIniciales(c.nombre || "?");
-  document.getElementById("ventaClienteAvatar").textContent  = inic;
-  document.getElementById("ventaClienteNombre").textContent  = c.nombre;
+  document.getElementById("ventaClienteAvatar").textContent = inic;
+  document.getElementById("ventaClienteNombre").textContent = c.nombre;
   const saldo = c.saldo || 0;
-  document.getElementById("ventaClienteDeuda").textContent   = saldo < 0 ? `Deuda: ${fmt(Math.abs(saldo))}` : "Sin deuda";
+  document.getElementById("ventaClienteDeuda").textContent  = saldo < 0 ? `Deuda: ${fmt(Math.abs(saldo))}` : "Sin deuda";
   document.getElementById("ventaClienteSelector").style.display     = "none";
   document.getElementById("ventaClienteSeleccionado").style.display = "flex";
+  // Resetear tipo
+  ventaTipoActivo = "";
+  document.querySelectorAll(".venta-tipo-chip").forEach(b => b.style.outline = "");
 });
 
 document.getElementById("btnQuitarClienteVenta")?.addEventListener("click", () => {
@@ -1579,6 +1579,17 @@ document.getElementById("btnQuitarClienteVenta")?.addEventListener("click", () =
   if (sel) sel.value = "";
   document.getElementById("ventaClienteSelector").style.display     = "flex";
   document.getElementById("ventaClienteSeleccionado").style.display = "none";
+  ventaTipoActivo = "";
+});
+
+// Chips tipo de registro
+document.getElementById("ventaClienteBloque")?.addEventListener("click", e => {
+  const chip = e.target.closest(".venta-tipo-chip");
+  if (!chip) return;
+  ventaTipoActivo = chip.dataset.tipo;
+  document.querySelectorAll(".venta-tipo-chip").forEach(b => {
+    b.style.outline = b.dataset.tipo === ventaTipoActivo ? "2px solid var(--accent)" : "";
+  });
 });
 document.getElementById("btnCancelarVenta").addEventListener("click", () => document.getElementById("modalVenta").classList.add("hidden"));
 
@@ -1635,6 +1646,7 @@ async function confirmarVentaFinal() {
     vendedor: getNombreUsuario(),
     clienteId:     document.getElementById("ventaClienteSelect")?.value || null,
     clienteNombre: document.getElementById("ventaClienteNombre")?.textContent || null,
+    ventaTipo:     ventaTipoActivo || null,
     ...(_notaVenta && { nota: _notaVenta }),
   };
 
@@ -1642,15 +1654,11 @@ async function confirmarVentaFinal() {
   const _itemsDesc = items.map(i => i.desc).join(", ");
   registrarLog("venta", `Venta registrada — ${fmt(Math.round(total))} · ${_itemsDesc}`);
 
-  // Vincular cliente si es Fiado o Pago
-  const chipActivo = document.querySelector(".nota-chip.active");
-  if (chipActivo) {
-    const notaChip = chipActivo.dataset.nota;
-    if (notaChip === "Fiado") {
-      registrarMovimientoCliente("fiado", Math.round(total), ventaId, _notaVenta || "Venta fiada");
-    } else if (notaChip === "Pago") {
-      registrarMovimientoCliente("pago", Math.round(total), ventaId, _notaVenta || "Pago");
-    }
+  // Vincular cliente según tipo de registro
+  if (ventaTipoActivo === "fiado") {
+    registrarMovimientoCliente("fiado", Math.round(total), ventaId, _notaVenta || "Venta fiada");
+  } else if (ventaTipoActivo === "cobro") {
+    registrarMovimientoCliente("pago", Math.round(total), ventaId, _notaVenta || "Cobro");
   }
 
   // 2. Cerrar modal y limpiar carrito INMEDIATAMENTE
@@ -2037,44 +2045,7 @@ document.getElementById("btnLimpiarBusqueda")?.addEventListener("click", () => {
 });
 
 // Teclas en nueva vista Venta: Enter agrega primer resultado, flechas navegan
-document.getElementById("notaToggleHeader")?.addEventListener("click", () => {
-  const body    = document.getElementById("notaToggleBody");
-  const chevron = document.getElementById("notaToggleChevron");
-  const abierto = body.style.display === "flex";
-  body.style.display    = abierto ? "none" : "flex";
-  chevron.style.transform = abierto ? "" : "rotate(180deg)";
-  if (!abierto) {
-    // Al abrir: enfocar el input de nota
-    setTimeout(() => document.getElementById("notaVentaInput")?.focus(), 50);
-  } else {
-    // Al cerrar: resetear chips y selector
-    document.querySelectorAll(".nota-chip").forEach(b => b.classList.remove("active"));
-    document.getElementById("notaVentaInput").value = "";
-    actualizarCobroClienteWrap(null);
-  }
-});
-
-// ── Chips de nota en modal venta ──
-document.getElementById("modalVenta")?.addEventListener("click", e => {
-  const chip = e.target.closest(".nota-chip");
-  if (!chip) return;
-  const input = document.getElementById("notaVentaInput");
-  if (chip.classList.contains("active")) {
-    chip.classList.remove("active");
-    if (input) input.value = "";
-    actualizarCobroClienteWrap(null);
-  } else {
-    document.querySelectorAll(".nota-chip").forEach(b => b.classList.remove("active"));
-    chip.classList.add("active");
-    if (input) input.value = chip.dataset.nota;
-    actualizarCobroClienteWrap(chip.dataset.nota);
-  }
-});
-
-// Al escribir en el input, desactivar chips
-document.getElementById("notaVentaInput")?.addEventListener("input", () => {
-  document.querySelectorAll(".nota-chip").forEach(b => b.classList.remove("active"));
-});
+// Chips de nota y toggle eliminados — lógica unificada en ventaClienteBloque
 
 // ── Anular venta desde el timeline ──
 document.getElementById("cajaTurnosWrap")?.addEventListener("click", async e => {
@@ -4454,6 +4425,7 @@ function getAvatarColor(nombre) {
 // ── Render lista ──
 let clienteExpandidoId = null;
 let clienteFilaActiva  = -1;
+let ventaTipoActivo    = ""; // "", "fiado", "cobro", "cortesia"
 
 function buildWA(tel) {
   if (!tel) return null;
