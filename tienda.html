@@ -665,8 +665,11 @@
           <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input type="text" class="search-input" id="prodSearchInput" placeholder="Buscar por nombre, código de barras o código interno…" style="padding-left:32px" />
         </div>
-        <select class="form-select" id="prodFilterProv" style="width:180px">
+        <select class="form-select" id="prodFilterProv" style="width:160px">
           <option value="">Todos los proveedores</option>
+        </select>
+        <select class="form-select" id="prodFilterRubro" style="width:140px">
+          <option value="">Todos los rubros</option>
         </select>
         <button class="btn-secondary" id="btnScanProductos">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
@@ -704,9 +707,14 @@
               <th>ID</th>
               <th>Codigo</th>
               <th>Producto</th>
+              <th>Rubro</th>
               <th class="num">P. Venta</th>
               <th class="num">P. Lista</th>
+              <th class="num">IVA%</th>
               <th class="num">Stock</th>
+              <th class="num">Mín</th>
+              <th class="num">Máx</th>
+              <th style="text-align:center">Activo</th>
               <th></th>
             </tr>
           </thead>
@@ -1359,53 +1367,91 @@
      MODAL: PRODUCTO (nuevo / editar)
 ══════════════════════════════ -->
 <div class="modal-overlay hidden" id="modalProducto">
-  <div class="modal">
+  <div class="modal" style="max-width:520px">
     <div class="modal-header">
       <span class="modal-title" id="modalProductoTitulo">Nuevo producto</span>
       <button class="modal-close" id="closeModalProducto">✕</button>
     </div>
-    <div class="modal-body">
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Proveedor</label>
-          <select class="form-select" id="pf-proveedor"></select>
+    <div class="modal-body" style="padding:10px 16px">
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">Proveedor</label>
+          <select class="form-select" id="pf-proveedor" style="width:100%"></select>
         </div>
-        <div class="form-group">
-          <label class="form-label">ID interno</label>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">ID interno</label>
           <input type="text" class="form-input" id="pf-id" placeholder="001" />
         </div>
       </div>
-      <div class="form-group">
-        <label class="form-label">Descripción del producto</label>
+
+      <div class="form-group" style="margin-top:8px;margin-bottom:0">
+        <label class="form-label" style="margin-bottom:3px">Descripción del producto</label>
         <input type="text" class="form-input" id="pf-desc" placeholder="Ej: Coca-Cola 1.5L" />
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Código de barras</label>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">Código de barras</label>
           <input type="text" class="form-input" id="pf-cod" placeholder="7790895000052" />
         </div>
-        <div class="form-group">
-          <label class="form-label">P. Lista ($)</label>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">Rubro / Familia</label>
+          <input type="text" class="form-input" id="pf-rubro" placeholder="Ej: Bebidas" list="rubrosList" autocomplete="off" />
+          <datalist id="rubrosList"></datalist>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">P. Lista ($)</label>
           <input type="number" class="form-input" id="pf-lista" placeholder="0" min="0" />
         </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">IVA %</label>
+          <div style="display:flex;gap:5px">
+            <select class="form-select" id="pf-iva-select" style="flex:1">
+              <option value="0">0%</option>
+              <option value="10.5">10.5%</option>
+              <option value="21">21%</option>
+              <option value="custom">Otro...</option>
+            </select>
+            <input type="number" class="form-input" id="pf-iva-custom" placeholder="%" min="0" max="100" step="0.5"
+              style="width:60px;display:none" />
+          </div>
+        </div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Stock actual</label>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">Stock actual</label>
           <input type="number" class="form-input" id="pf-stock" placeholder="0" min="0" />
         </div>
-        <div class="form-group">
-          <label class="form-label">Stock mínimo</label>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">Stock mínimo</label>
           <input type="number" class="form-input" id="pf-stockMin" placeholder="5" min="0" />
         </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">Stock máximo</label>
+          <input type="number" class="form-input" id="pf-stockMax" placeholder="100" min="0" />
+        </div>
+      </div>
+
+      <div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding:8px 10px;background:var(--surface2);border-radius:var(--radius-sm)">
+        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;color:var(--text2)">
+          <input type="checkbox" id="pf-activo" checked style="width:15px;height:15px;cursor:pointer" />
+          Producto activo
+        </label>
+        <span style="font-size:11px;color:var(--text3)">— Los productos inactivos no aparecen en Venta</span>
+      </div>
+
+      <!-- Historial de precios -->
+      <div id="historialPreciosWrap" class="hidden" style="margin-top:10px">
+        <div style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">Historial de precios</div>
+        <div id="historialPreciosList" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;max-height:120px;overflow-y:auto"></div>
       </div>
     </div>
-      <!-- Historial de precios -->
-      <div id="historialPreciosWrap" class="hidden" style="margin-top:12px">
-        <div style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">Historial de precios</div>
-        <div id="historialPreciosList" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden;max-height:140px;overflow-y:auto"></div>
-      </div>
-    <div class="modal-footer">
+    <div class="modal-footer" style="padding:8px 16px">
       <button class="btn-danger hidden" id="btnEliminarProducto">Eliminar</button>
       <div style="display:flex;gap:8px">
         <button class="btn-secondary" id="btnCancelarProducto">Cancelar</button>
