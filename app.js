@@ -1454,6 +1454,11 @@ document.getElementById("btnConfirmarVenta").addEventListener("click", () => {
   // Resetear tipo de registro
   ventaTipoActivo = "";
   document.querySelectorAll(".venta-tipo-chip").forEach(b => b.style.fontWeight = "400");
+  // Cerrar panel extras
+  const extrasBody    = document.getElementById("ventaExtrasBody");
+  const extrasChevron = document.getElementById("ventaExtrasChevron");
+  if (extrasBody)    extrasBody.style.display = "none";
+  if (extrasChevron) extrasChevron.style.transform = "";
 
   // Popular selector de cliente
   const sel = document.getElementById("ventaClienteSelect");
@@ -1571,6 +1576,15 @@ function renderModalVenta() {
 }
 
 document.getElementById("closeModalVenta").addEventListener("click", () => document.getElementById("modalVenta").classList.add("hidden"));
+
+// Toggle extras (Cliente / Nota)
+document.getElementById("ventaExtrasToggle")?.addEventListener("click", () => {
+  const body    = document.getElementById("ventaExtrasBody");
+  const chevron = document.getElementById("ventaExtrasChevron");
+  const open    = body.style.display === "flex";
+  body.style.display    = open ? "none" : "flex";
+  chevron.style.transform = open ? "" : "rotate(180deg)";
+});
 
 // ── Cliente en Venta ──
 document.getElementById("ventaClienteSelect")?.addEventListener("change", e => {
