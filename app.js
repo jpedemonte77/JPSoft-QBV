@@ -5229,6 +5229,8 @@ function renderGastos() {
     "Transferencia":    "color:#0C447C;background:#E6F1FB",
     "Débito":           "color:#3C3489;background:#EEEDFE",
     "Crédito":          "color:#7a3a00;background:#fef0e0",
+    "QR":               "color:#0C447C;background:#E6F1FB",
+    "Billetera virtual":"color:#0C447C;background:#E6F1FB",
     "Cheque":           "color:var(--text2);background:var(--surface2)",
     "Depósito":         "color:#0C447C;background:#E6F1FB",
     "Cuenta corriente": "color:var(--text2);background:var(--surface2)",
@@ -5358,7 +5360,7 @@ function abrirModalGasto(id = null, gasto = null) {
 
   // Forma de pago
   const fp = gasto?.formaPago || "Efectivo";
-  const FPS_BASE = ["Efectivo","Transferencia","Débito","Crédito","Cheque","Depósito","Cuenta corriente","Otro"];
+  const FPS_BASE = ["Efectivo","Transferencia","Débito","Crédito","QR","Billetera virtual","Cheque","Depósito","Cuenta corriente","Otro"];
   const fpSel = document.getElementById("gastoFormaPagoSelect");
   const fpCustom = document.getElementById("gastoFormaPagoCustom");
   if (FPS_BASE.includes(fp)) {
