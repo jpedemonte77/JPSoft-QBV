@@ -590,6 +590,7 @@ document.querySelectorAll(".nav-item[data-view]").forEach(btn => {
     }
     if (view === "clientes")          { renderClientesLista(); setTimeout(() => document.getElementById("clientesLista")?.focus(), 100); }
     if (view === "compras")           renderCompras();
+    if (view === "proveedores")       { provFilaActiva = -1; renderProveedores(); setTimeout(() => document.getElementById("proveedoresGrid")?.focus(), 100); }
   });
 });
 
@@ -3039,6 +3040,7 @@ function renderProveedores() {
 document.getElementById("proveedoresGrid")?.addEventListener("keydown", e => {
   if (["ArrowDown","ArrowUp","Enter","Escape"].indexOf(e.key) === -1) return;
   e.preventDefault();
+  e.stopPropagation();
   const lista = Object.entries(proveedores).sort((a,b) => a[1].nombre.localeCompare(b[1].nombre));
   if (!lista.length) return;
   if (e.key === "ArrowDown") {
@@ -3052,8 +3054,7 @@ document.getElementById("proveedoresGrid")?.addEventListener("keydown", e => {
   }
   renderProveedores();
   document.querySelector(`.prov-row[data-idx="${provFilaActiva}"]`)?.scrollIntoView({ block:"nearest" });
-  // mantener foco en el tbody
-  document.getElementById("proveedoresGrid")?.focus();
+  requestAnimationFrame(() => document.getElementById("proveedoresGrid")?.focus());
 });
 
 // Click en fila
@@ -3182,17 +3183,22 @@ function abrirModalProveedor(id) {
   document.getElementById("btnEliminarProveedor").classList.toggle("hidden", !id);
   const p = id ? proveedores[id] : {};
 
-  // Popular datalist de tipos custom
+  // Popular datalist de tipos custom (excluir tipos legacy)
+  const TIPOS_LEGACY = new Set(["general","tabaco","cigarrillos","Tabaco","Cigarrillo","Cigarrillos"]);
   const tiposDl = document.getElementById("provTipoList");
   const tiposUsados = new Set();
-  Object.values(proveedores).forEach(pv => { if (pv.tipo && pv.tipo !== "General") tiposUsados.add(pv.tipo); });
+  Object.values(proveedores).forEach(pv => {
+    if (pv.tipo && pv.tipo !== "General" && !TIPOS_LEGACY.has(pv.tipo)) tiposUsados.add(pv.tipo);
+  });
   if (tiposDl) tiposDl.innerHTML = [...tiposUsados].sort().map(t => `<option value="${t}">`).join("");
 
   // Popular select de tipos
   const tipoSel    = document.getElementById("vf-tipo");
   const tipoCustom = document.getElementById("vf-tipo-custom");
-  const tipoActual = p?.tipo || "General";
-  // Reconstruir opciones del select de tipo (solo General + custom existentes)
+  // Si el tipo guardado es legacy, tratarlo como General
+  const tipoRaw    = p?.tipo || "General";
+  const tipoActual = TIPOS_LEGACY.has(tipoRaw) ? "General" : tipoRaw;
+  // Reconstruir opciones
   tipoSel.innerHTML = '<option value="General">General</option>';
   [...tiposUsados].sort().forEach(t => {
     const opt = document.createElement("option");
