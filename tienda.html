@@ -1525,69 +1525,63 @@
       <span class="modal-title" id="modalProveedorTitulo">Nuevo proveedor</span>
       <button class="modal-close" id="closeModalProveedor">✕</button>
     </div>
-    <div class="modal-body" style="padding:10px 16px">
+    <div class="modal-body" style="padding:8px 16px;display:flex;flex-direction:column;gap:7px">
 
-      <div class="form-group" style="margin-bottom:8px">
-        <label class="form-label" style="margin-bottom:3px">Nombre del proveedor <span style="color:var(--danger)">*</span></label>
+      <div class="form-group" style="margin-bottom:0">
+        <label class="form-label" style="margin-bottom:2px">Nombre <span style="color:var(--danger)">*</span></label>
         <input type="text" class="form-input" id="vf-nombre" placeholder="Ej: Refrescos SA" />
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
         <div class="form-group" style="margin-bottom:0">
-          <label class="form-label" style="margin-bottom:3px">Tipo</label>
-          <div style="display:flex;gap:5px">
-            <select class="form-select" id="vf-tipo" style="flex:1">
-              <option value="General">General</option>
-              <option value="custom">+ Nuevo tipo…</option>
-            </select>
-          </div>
-          <input type="text" class="form-input" id="vf-tipo-custom" placeholder="Ej: Bebidas, Lácteos…" list="provTipoList" autocomplete="off"
-            style="display:none;margin-top:5px;font-size:12px" />
+          <label class="form-label" style="margin-bottom:2px">Tipo</label>
+          <select class="form-select" id="vf-tipo" style="width:100%">
+            <option value="General">General</option>
+            <option value="custom">+ Nuevo tipo…</option>
+          </select>
+          <input type="text" class="form-input" id="vf-tipo-custom" placeholder="Ej: Lácteos, Bebidas…" list="provTipoList" autocomplete="off" style="display:none;margin-top:4px;font-size:12px" />
           <datalist id="provTipoList"></datalist>
         </div>
         <div class="form-group" style="margin-bottom:0">
-          <label class="form-label" style="margin-bottom:3px">Categoría <span style="font-weight:400;color:var(--text3)">(opcional)</span></label>
+          <label class="form-label" style="margin-bottom:2px">Categoría <span style="font-weight:400;color:var(--text3)">(opcional)</span></label>
           <input type="text" class="form-input" id="vf-categoria" placeholder="Ej: Bebidas" />
         </div>
       </div>
 
-      <div class="form-group" style="margin-bottom:8px">
-        <label class="form-label" style="margin-bottom:3px">Margen de ganancia (%)</label>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input type="number" class="form-input" id="vf-ganancia" placeholder="50" min="0" max="999" style="flex:1" />
-          <span style="font-size:12px;color:var(--text3);white-space:nowrap" id="vf-ganancia-hint">Se pre-carga según configuración</span>
-        </div>
-      </div>
-
-      <div style="border-top:1px solid var(--border2);margin:8px 0;padding-top:8px">
-        <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Datos de contacto</div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label" style="margin-bottom:3px">WhatsApp</label>
-          <input type="tel" class="form-input" id="vf-whatsapp" placeholder="Ej: 3415551234" maxlength="20" />
-        </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label" style="margin-bottom:3px">Email</label>
-          <input type="email" class="form-input" id="vf-email" placeholder="Ej: ventas@proveedor.com" maxlength="80" />
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:1fr 60px;gap:8px;margin-bottom:8px">
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label" style="margin-bottom:3px">Dirección</label>
-          <input type="text" class="form-input" id="vf-direccion" placeholder="Ej: San Martín 1234" maxlength="100" />
-        </div>
-        <div class="form-group" style="margin-bottom:0">
-          <label class="form-label" style="margin-bottom:3px">CP</label>
-          <input type="text" class="form-input" id="vf-cp" placeholder="2000" maxlength="10" />
-        </div>
-      </div>
-
       <div class="form-group" style="margin-bottom:0">
-        <label class="form-label" style="margin-bottom:3px">Localidad</label>
-        <input type="text" class="form-input" id="vf-localidad" placeholder="Ej: Rosario" maxlength="60" />
+        <label class="form-label" style="margin-bottom:2px">Margen de ganancia (%)</label>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input type="number" class="form-input" id="vf-ganancia" placeholder="50" min="0" max="999" style="width:90px" />
+          <span style="font-size:11px;color:var(--text3)" id="vf-ganancia-hint">Se pre-carga según configuración</span>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--border2);padding-top:7px">
+        <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px">Datos de contacto</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:7px">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label" style="margin-bottom:2px">WhatsApp</label>
+            <input type="tel" class="form-input" id="vf-whatsapp" placeholder="Ej: 3415551234" maxlength="20" />
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label" style="margin-bottom:2px">Email</label>
+            <input type="email" class="form-input" id="vf-email" placeholder="Ej: ventas@proveedor.com" maxlength="80" />
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 80px 1fr;gap:8px">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label" style="margin-bottom:2px">Dirección</label>
+            <input type="text" class="form-input" id="vf-direccion" placeholder="Ej: San Martín 1234" maxlength="100" />
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label" style="margin-bottom:2px">CP</label>
+            <input type="text" class="form-input" id="vf-cp" placeholder="2000" maxlength="10" />
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label" style="margin-bottom:2px">Localidad</label>
+            <input type="text" class="form-input" id="vf-localidad" placeholder="Ej: Rosario" maxlength="60" />
+          </div>
+        </div>
       </div>
 
     </div>
