@@ -2501,25 +2501,30 @@ async function confirmarActSeleccionados() {
   const btn    = document.getElementById("btnConfirmarActSeleccionados");
   btn.disabled = true; btn.textContent = "Aplicando…";
 
-  const ahora = nowFecha(); const hora = nowHora();
-  for (const cb of checks) {
-    const p = allProducts.find(x => x._id === cb.dataset.id);
-    if (!p) continue;
-    const nuevo = Math.round(p.lista * factor);
-    const histId = `${ahora}_${hora.replace(":","")}`;
-    await updateDoc(doc(db, "productos", p._id), {
-      lista: nuevo,
-      [`historialPrecios.${histId}`]: { precioAnterior: p.lista, precioNuevo: nuevo, fecha: ahora, hora, admin: getNombreUsuario() }
-    });
+  try {
+    const ahora = nowFecha(); const hora = nowHora();
+    for (const cb of checks) {
+      const p = allProducts.find(x => x._id === cb.dataset.id);
+      if (!p) continue;
+      const nuevo = Math.round(p.lista * factor);
+      const histId = `${ahora}_${hora.replace(":","")}_${p._id.slice(-4)}`;
+      await updateDoc(doc(db, "productos", p._id), {
+        lista: nuevo,
+        [`historialPrecios.${histId}`]: { precioAnterior: p.lista, precioNuevo: nuevo, fecha: ahora, hora, admin: getNombreUsuario() }
+      });
+    }
+    registrarLog("productos", `Precios actualizados — ${checks.length} productos · ${tipo} ${pct}%`);
+    showToast(`Precios actualizados ✓ — ${checks.length} productos`, "success");
+    document.getElementById("modalActualizarSeleccionados").classList.add("hidden");
+    document.querySelectorAll(".prod-check").forEach(cb => cb.checked = false);
+    document.getElementById("prodCheckAll").checked = false;
+    actualizarBarraSeleccion();
+  } catch(e) {
+    console.error("Error actualizando precios:", e);
+    showToast("Error al actualizar precios: " + e.message, "error");
+  } finally {
+    btn.disabled = false; btn.textContent = "Aplicar";
   }
-
-  registrarLog("productos", `Precios actualizados — ${checks.length} productos · ${tipo} ${pct}%`);
-  showToast(`Precios actualizados ✓ — ${checks.length} productos`, "success");
-  document.getElementById("modalActualizarSeleccionados").classList.add("hidden");
-  document.querySelectorAll(".prod-check").forEach(cb => cb.checked = false);
-  document.getElementById("prodCheckAll").checked = false;
-  actualizarBarraSeleccion();
-  btn.disabled = false; btn.textContent = "Aplicar";
 }
 
 document.getElementById("btnConfirmarActSeleccionados")?.addEventListener("click", confirmarActSeleccionados);
