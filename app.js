@@ -130,6 +130,7 @@ const PROD_PAGE    = 40;
 let prodEditId     = null;
 let provEditId     = null;
 let soloConAlerta  = false;
+let soloActivos    = false;
 let filaSeleccionada = -1; // índice de fila seleccionada con teclado
 
 // Carrito
@@ -2390,6 +2391,7 @@ function renderProductosTabla() {
       const s = getStockStatus(p);
       if (s !== "sin-stock" && s !== "bajo") return false;
     }
+    if (soloActivos && p.activo === false) return false;
     if (!words.length) return true;
     return matchQuery(p.normDesc, words) || matchQuery(p.normCod, words) || matchQuery(p.normId, words);
   });
@@ -2463,6 +2465,7 @@ function renderProductosTabla() {
       <td>
         <div style="display:flex;gap:5px;justify-content:flex-end">
           <button class="btn-secondary" style="font-size:11px;padding:4px 8px" onclick="window._verVentasProducto('${p._id}','${(p.desc||'').replace(/'/g,'&#39;')}')">Ventas</button>
+          <button class="btn-secondary" style="font-size:11px;padding:4px 8px" onclick="window._verComprasProducto('${p._id}','${(p.desc||'').replace(/'/g,'&#39;')}')">Compras</button>
           <button class="btn-secondary" style="font-size:11px;padding:4px 8px" data-edit onclick="window._editarProducto('${p._id}')">Editar</button>
           <button class="btn-danger" style="font-size:11px;padding:4px 7px" onclick="window._eliminarProducto('${p._id}','${(p.desc||'').replace(/'/g,'&#39;')}')">🗑</button>
         </div>
@@ -2690,7 +2693,64 @@ document.querySelector(".productos-table-wrap")?.addEventListener("click", e => 
 document.getElementById("prodFilterProv")?.addEventListener("change",  () => { prodPage = 1; renderProductosTabla(); });
 document.getElementById("prodFilterRubro")?.addEventListener("change", () => { prodPage = 1; renderProductosTabla(); });
 
-document.getElementById("btnFiltroAlerta")?.addEventListener("click", function() {
+document.getElementById("btnSoloActivos")?.addEventListener("click", function() {
+  soloActivos = !soloActivos;
+  this.style.background   = soloActivos ? "var(--accent)" : "";
+  this.style.color        = soloActivos ? "#fff" : "";
+  this.style.borderColor  = soloActivos ? "var(--accent)" : "";
+  renderProductosTabla();
+});
+
+// ── Ver Compras por producto ──
+window._verComprasProducto = function(prodId, desc) {
+  const p = allProducts.find(x => x._id === prodId);
+  document.getElementById("modalComprasProdNombre").textContent = desc;
+  document.getElementById("modalComprasProdSub").textContent    = p ? `${p.proveedor||""} · Stock actual: ${p.stock ?? "—"}` : "";
+
+  // Buscar en comprasData
+  const compras = comprasData
+    .filter(c => (c.items||[]).some(i => i.prodId === prodId || (i.desc||"").toLowerCase() === (desc||"").toLowerCase()))
+    .sort((a,b) => (b.ts||"").localeCompare(a.ts||""));
+
+  const totalUnidades = compras.reduce((s, c) => {
+    const item = (c.items||[]).find(i => i.prodId === prodId || (i.desc||"").toLowerCase() === (desc||"").toLowerCase());
+    return s + (item?.qty || 0);
+  }, 0);
+  const totalInvertido = compras.reduce((s, c) => {
+    const item = (c.items||[]).find(i => i.prodId === prodId || (i.desc||"").toLowerCase() === (desc||"").toLowerCase());
+    return s + (item?.subtotal || 0);
+  }, 0);
+
+  document.getElementById("cpStatUnidades").textContent = totalUnidades;
+  document.getElementById("cpStatTrans").textContent    = compras.length;
+  document.getElementById("cpStatTotal").textContent    = fmt(totalInvertido);
+
+  const tbody = document.getElementById("cpTableBody");
+  if (!compras.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-row">Sin compras registradas para este producto.</td></tr>`;
+  } else {
+    tbody.innerHTML = compras.map(c => {
+      const item = (c.items||[]).find(i => i.prodId === prodId || (i.desc||"").toLowerCase() === (desc||"").toLowerCase());
+      const [fy,fm,fd] = (c.fecha||"").split("-");
+      const fechaFmt = c.fecha ? `${parseInt(fd)}/${parseInt(fm)}/${fy}` : "—";
+      const hora = c.ts ? new Date(c.ts).toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit"}) : "—";
+      return `<tr>
+        <td style="font-size:12px;color:var(--text3)">${fechaFmt}</td>
+        <td style="font-size:12px;color:var(--text3)">${hora}</td>
+        <td><span class="badge ${badgeClass(c.proveedor)}">${c.proveedor||"—"}</span></td>
+        <td class="num" style="font-weight:600">${item?.qty||0}</td>
+        <td class="num">${fmt(item?.precio||0)}</td>
+        <td class="num" style="font-weight:600">${fmt(item?.subtotal||0)}</td>
+      </tr>`;
+    }).join("");
+  }
+
+  document.getElementById("modalComprasProducto").classList.remove("hidden");
+};
+
+document.getElementById("closeModalComprasProducto")?.addEventListener("click",  () => document.getElementById("modalComprasProducto").classList.add("hidden"));
+document.getElementById("closeModalComprasProducto2")?.addEventListener("click", () => document.getElementById("modalComprasProducto").classList.add("hidden"));
+document.getElementById("modalComprasProducto")?.addEventListener("click", e => { if (e.target === e.currentTarget) e.currentTarget.classList.add("hidden"); });
   soloConAlerta = !soloConAlerta;
   this.style.background = soloConAlerta ? "var(--danger-bg)" : "";
   this.style.borderColor = soloConAlerta ? "var(--danger-border)" : "";
