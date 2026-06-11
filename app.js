@@ -7677,11 +7677,13 @@ function abrirModalPresupuesto(id = null, clienteIdInicial = null) {
 
   renderPresupItems();
   document.getElementById("modalPresupuesto").classList.remove("hidden");
+  setTimeout(() => document.getElementById("presupClienteSelect")?.focus(), 80);
 }
 
 function cerrarModalPresupuesto() {
   document.getElementById("modalPresupuesto").classList.add("hidden");
   presupEditId = null; presupItemsActuales = [];
+  requestAnimationFrame(() => document.getElementById("presupuestosTableBody")?.focus());
 }
 
 // Listeners del modal
