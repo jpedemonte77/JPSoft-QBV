@@ -8138,7 +8138,7 @@ window._cargarComboEnVenta = function(id) {
     return;
   }
 
-  // Agregar al carrito — si ya existe sumar cantidad
+  // Agregar solo los productos individuales al carrito
   (c.items||[]).forEach(item => {
     const p = allProducts.find(x => x._id === item.prodId);
     if (!p) return;
@@ -8146,11 +8146,7 @@ window._cargarComboEnVenta = function(id) {
     else cart[p._id] = { product: p, qty: item.qty||1 };
   });
 
-  // Agregar el combo como línea especial al carrito para mostrarlo en el ticket
-  const comboKey = `combo_${id}`;
-  cart[comboKey] = { product: { _id: comboKey, desc: c.nombre, esCombo: true, comboId: id }, qty: 1, precioCombo: c.precio, itemsCombo: c.items };
-
   document.getElementById("modalSelectorCombo").classList.add("hidden");
   renderCartLateral();
-  showToast(`Combo "${c.nombre}" agregado al carrito ✓`, "success");
+  showToast(`Combo "${c.nombre}" cargado · ${fmt(c.precio)} ✓`, "success");
 };
