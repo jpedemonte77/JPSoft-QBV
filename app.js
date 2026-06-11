@@ -577,7 +577,15 @@ document.querySelectorAll(".nav-item[data-view]").forEach(btn => {
     if (view === "usuarios")          renderUsuarios();
     if (view === "historial-precios") { renderHistorialPrecios(); renderHistorialVentas(); }
     if (view === "actividad")         renderActividad();
-    if (view === "gastos")            renderGastos();
+    if (view === "gastos") {
+      const hoy = todayKey();
+      gastoFiltroDesde = hoy; gastoFiltroHasta = hoy;
+      const inputDesde = document.getElementById("gastosFechaDesde");
+      const inputHasta = document.getElementById("gastosFechaHasta");
+      if (inputDesde) { inputDesde.value = hoy; inputDesde._initialized = false; }
+      if (inputHasta) { inputHasta.value = hoy; inputHasta._initialized = false; }
+      renderGastos();
+    }
     if (view === "clientes")          { renderClientesLista(); setTimeout(() => document.getElementById("clientesLista")?.focus(), 100); }
     if (view === "compras")           renderCompras();
   });
@@ -5127,7 +5135,9 @@ async function registrarMovimientoCliente(tipo, monto, ventaId, nota) {
 // ============================================================
 let gastoCatActiva  = "Pago de impuesto";
 let gastoFechaKey   = todayKey();
-let gastoEditando   = null; // null = nuevo, string = id del gasto a editar
+let gastoEditando   = null;
+let gastoFiltroDesde = todayKey();
+let gastoFiltroHasta = todayKey();
 
 // ── Helpers ──
 function getGastos(fechaKey) {
@@ -5147,67 +5157,105 @@ function calcTotalesGastos(fechaKey) {
 
 // ── Render vista Gastos ──
 function renderGastos() {
-  const esHoy = gastoFechaKey === todayKey();
-  document.getElementById("gastosTituloFecha").textContent = "Gastos — " + fechaLabel(gastoFechaKey);
-  document.getElementById("btnGastosSiguiente").disabled = esHoy;
+  // Actualizar inputs de fecha
+  const inputDesde = document.getElementById("gastosFechaDesde");
+  const inputHasta = document.getElementById("gastosFechaHasta");
+  if (inputDesde && !inputDesde._initialized) { inputDesde.value = gastoFiltroDesde; inputDesde._initialized = true; }
+  if (inputHasta && !inputHasta._initialized) { inputHasta.value = gastoFiltroHasta; inputHasta._initialized = true; }
 
-  const { tots, total, gastos } = calcTotalesGastos(gastoFechaKey);
+  // Recopilar gastos del rango
+  const gastosTodos = [];
+  Object.entries(cajaData).forEach(([fecha, dia]) => {
+    if (fecha < gastoFiltroDesde || fecha > gastoFiltroHasta) return;
+    Object.entries(dia.gastos || {}).forEach(([id, g]) => {
+      gastosTodos.push({ ...g, _id: id, _fecha: fecha });
+    });
+  });
+  gastosTodos.sort((a, b) => b._fecha.localeCompare(a._fecha) || (b.hora||"").localeCompare(a.hora||""));
+
+  // Título
+  const mismaFecha = gastoFiltroDesde === gastoFiltroHasta;
+  document.getElementById("gastosTituloFecha").textContent = mismaFecha
+    ? "Gastos — " + fechaLabel(gastoFiltroDesde)
+    : `Gastos — ${fechaLabel(gastoFiltroDesde)} al ${fechaLabel(gastoFiltroHasta)}`;
+
+  // Stats
   const statsWrap = document.getElementById("gastosStatsWrap");
-
-  if (gastos.length) {
+  const total = gastosTodos.reduce((s, g) => s + (g.monto || 0), 0);
+  if (gastosTodos.length) {
     statsWrap.classList.remove("hidden");
-    document.getElementById("gStatTotal").textContent    = fmt(total);
-    document.getElementById("gStatCant").textContent     = gastos.length + (gastos.length === 1 ? " gasto" : " gastos");
-    document.getElementById("gStatPagoImp").textContent  = fmt(tots["Pago de impuesto"] || 0);
-    document.getElementById("gStatPagoServ").textContent = fmt(tots["Pago de servicio"] || 0);
-    document.getElementById("gStatInsumo").textContent   = fmt(tots["Insumo"] || 0);
-    document.getElementById("gStatRetiro").textContent   = fmt(tots["Retiro"] || 0);
-    document.getElementById("gStatOtro").textContent     = fmt(tots["Otro"] || 0);
+    document.getElementById("gStatTotal").textContent = fmt(total);
+    document.getElementById("gStatCant").textContent  = gastosTodos.length + (gastosTodos.length === 1 ? " gasto" : " gastos");
+    const tots = {};
+    gastosTodos.forEach(g => { tots[g.cat] = (tots[g.cat] || 0) + (g.monto || 0); });
+    const statIds = { "Impuesto / Tasa":"gStatPagoImp","Servicio":"gStatPagoServ","Insumo":"gStatInsumo","Retiro":"gStatRetiro","Otro":"gStatOtro" };
+    Object.entries(statIds).forEach(([cat, id]) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = fmt(tots[cat] || 0);
+    });
   } else {
     statsWrap.classList.add("hidden");
   }
 
   const tbody = document.getElementById("gastosTableBody");
   const empty = document.getElementById("gastosEmptyMsg");
+  const pie   = document.getElementById("gastosTotalPie");
 
-  if (!gastos.length) {
+  if (!gastosTodos.length) {
     tbody.innerHTML = "";
     empty.style.display = "block";
+    if (pie) pie.style.display = "none";
     return;
   }
 
   empty.style.display = "none";
+  if (pie) {
+    pie.style.display = "flex";
+    document.getElementById("gastosTotalCant").textContent = `${gastosTodos.length} gasto${gastosTodos.length !== 1 ? "s" : ""}`;
+    document.getElementById("gastosTotalMonto").textContent = fmt(total);
+  }
 
   const CAT_BADGE = {
-    "Pago de impuesto": "color:#3C3489;background:#EEEDFE",
-    "Pago de servicio": "color:#0C447C;background:#E6F1FB",
-    "Insumo":           "color:#27500A;background:#EAF3DE",
-    "Retiro":           "color:#7a3a00;background:#fef0e0",
-    "Otro":             "color:var(--text2);background:var(--surface2)",
-    "Pago proveedor":   "color:#0C447C;background:#E6F1FB",
-    "Insumos":          "color:#27500A;background:#EAF3DE",
+    "Impuesto / Tasa":            "color:#3C3489;background:#EEEDFE",
+    "Servicio":                   "color:#0C447C;background:#E6F1FB",
+    "Seguro":                     "color:#7a3a00;background:#fef0e0",
+    "Mantenimiento / Reparación": "color:#27500A;background:#EAF3DE",
+    "Insumo":                     "color:#27500A;background:#EAF3DE",
+    "Retiro":                     "color:#7a3a00;background:#fef0e0",
+    "Otro":                       "color:var(--text2);background:var(--surface2)",
+  };
+  const FP_BADGE = {
+    "Efectivo":         "color:#27500A;background:#EAF3DE",
+    "Transferencia":    "color:#0C447C;background:#E6F1FB",
+    "Débito":           "color:#3C3489;background:#EEEDFE",
+    "Crédito":          "color:#7a3a00;background:#fef0e0",
+    "Cheque":           "color:var(--text2);background:var(--surface2)",
+    "Depósito":         "color:#0C447C;background:#E6F1FB",
+    "Cuenta corriente": "color:var(--text2);background:var(--surface2)",
   };
 
-  const ordenados = [...gastos].sort((a, b) => (b.hora || "").localeCompare(a.hora || ""));
-
-  tbody.innerHTML = ordenados.map(g => {
-    const badgeStyle = CAT_BADGE[g.cat] || CAT_BADGE["Otro"];
+  tbody.innerHTML = gastosTodos.map(g => {
+    const badgeCat = CAT_BADGE[g.cat] || "color:var(--text2);background:var(--surface2)";
+    const badgeFP  = g.formaPago ? (FP_BADGE[g.formaPago] || "color:var(--text2);background:var(--surface2)") : "";
+    const [fy,fm,fd] = g._fecha.split("-");
+    const fechaFmt = `${parseInt(fd)}/${parseInt(fm)}/${fy}`;
     return `<tr>
-      <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)">${fmtHora(g.hora) || "—"}</td>
-      <td><span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;${badgeStyle}">${g.cat}</span></td>
-      <td style="font-size:13px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${g.desc || ''}">${g.desc || "—"}</td>
-      <td class="num" style="font-weight:600">${fmt(g.monto || 0)}</td>
-      <td style="font-size:12px;color:var(--text2)">${g.admin || "—"}</td>
+      <td style="font-size:12px;color:var(--text2)">${fechaFmt}</td>
+      <td style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3)">${fmtHora(g.hora)||"—"}</td>
+      <td><span style="font-size:11px;font-weight:500;padding:2px 8px;border-radius:10px;${badgeCat}">${g.cat}</span></td>
+      <td style="font-size:13px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${g.desc||''}">${g.desc||"—"}</td>
+      <td>${g.formaPago ? `<span style="font-size:11px;padding:2px 7px;border-radius:10px;${badgeFP}">${g.formaPago}</span>` : "—"}</td>
+      <td class="num" style="font-weight:600">${fmt(g.monto||0)}</td>
+      <td style="font-size:12px;color:var(--text2)">${g.admin||"—"}</td>
       <td>
         <div style="display:flex;gap:5px;justify-content:flex-end">
-          <button class="btn-secondary" style="font-size:11px;padding:4px 8px;white-space:nowrap" data-gasto-edit="${g._id}" data-fecha="${gastoFechaKey}">Editar</button>
-          <button class="btn-danger" style="font-size:11px;padding:4px 7px;opacity:.8;white-space:nowrap" data-gasto-anular="${g._id}" data-fecha="${gastoFechaKey}" data-desc="${(g.desc || g.cat).replace(/"/g,'&quot;')}" data-monto="${g.monto || 0}">✕ Anular</button>
+          <button class="btn-secondary" style="font-size:11px;padding:4px 8px;white-space:nowrap" data-gasto-edit="${g._id}" data-fecha="${g._fecha}">Editar</button>
+          <button class="btn-danger" style="font-size:11px;padding:4px 7px;opacity:.8;white-space:nowrap" data-gasto-anular="${g._id}" data-fecha="${g._fecha}" data-desc="${(g.desc||g.cat).replace(/"/g,'&quot;')}" data-monto="${g.monto||0}">✕</button>
         </div>
       </td>
     </tr>`;
   }).join("");
 }
-
 // Delegación de eventos en la tabla de gastos
 document.getElementById("gastosTableBody")?.addEventListener("click", async e => {
   // Editar
@@ -5238,28 +5286,100 @@ document.getElementById("gastosTableBody")?.addEventListener("click", async e =>
 
 // Navegación de fechas en Gastos
 document.getElementById("btnGastosAnterior")?.addEventListener("click", () => {
-  gastoFechaKey = offsetFecha(gastoFechaKey, -1);
+  const hoy = todayKey();
+  gastoFiltroDesde = offsetFecha(gastoFiltroDesde, -1);
+  gastoFiltroHasta = offsetFecha(gastoFiltroHasta, -1);
+  const inputDesde = document.getElementById("gastosFechaDesde");
+  const inputHasta = document.getElementById("gastosFechaHasta");
+  if (inputDesde) inputDesde.value = gastoFiltroDesde;
+  if (inputHasta) inputHasta.value = gastoFiltroHasta;
   renderGastos();
 });
 document.getElementById("btnGastosSiguiente")?.addEventListener("click", () => {
-  const sig = offsetFecha(gastoFechaKey, 1);
-  if (sig > todayKey()) return;
-  gastoFechaKey = sig;
+  const hoy = todayKey();
+  if (gastoFiltroHasta >= hoy) return;
+  gastoFiltroDesde = offsetFecha(gastoFiltroDesde, 1);
+  gastoFiltroHasta = offsetFecha(gastoFiltroHasta, 1);
+  const inputDesde = document.getElementById("gastosFechaDesde");
+  const inputHasta = document.getElementById("gastosFechaHasta");
+  if (inputDesde) inputDesde.value = gastoFiltroDesde;
+  if (inputHasta) inputHasta.value = gastoFiltroHasta;
+  renderGastos();
+});
+
+document.getElementById("btnGastosFiltrarFecha")?.addEventListener("click", () => {
+  const desde = document.getElementById("gastosFechaDesde").value;
+  const hasta = document.getElementById("gastosFechaHasta").value;
+  if (!desde || !hasta) { showToast("Completá ambas fechas.", "warning"); return; }
+  if (desde > hasta)    { showToast("La fecha desde no puede ser mayor a hasta.", "warning"); return; }
+  gastoFiltroDesde = desde;
+  gastoFiltroHasta = hasta;
+  renderGastos();
+});
+
+document.getElementById("btnGastosHoy")?.addEventListener("click", () => {
+  const hoy = todayKey();
+  gastoFiltroDesde = hoy;
+  gastoFiltroHasta = hoy;
+  const inputDesde = document.getElementById("gastosFechaDesde");
+  const inputHasta = document.getElementById("gastosFechaHasta");
+  if (inputDesde) { inputDesde.value = hoy; inputDesde._initialized = false; }
+  if (inputHasta) { inputHasta.value = hoy; inputHasta._initialized = false; }
   renderGastos();
 });
 
 // ── Modal gasto — abrir para nuevo o editar ──
 function abrirModalGasto(id = null, gasto = null) {
   gastoEditando = id;
-  document.getElementById("modalGastoTitulo").textContent = id ? "Editar gasto" : "Registrar gasto";
+  document.getElementById("modalGastoTitulo").textContent  = id ? "Editar gasto" : "Registrar gasto";
   document.getElementById("btnConfirmarGasto").textContent = id ? "Guardar cambios" : "Registrar";
   document.getElementById("gastoEditId").value = id || "";
 
-  // Precargar datos si es edición
-  gastoCatActiva = gasto?.cat || "Pago de impuesto";
+  // Categoría
+  const catGuardada = gasto?.cat || "Impuesto / Tasa";
+  const CATS_BASE = ["Impuesto / Tasa","Servicio","Seguro","Mantenimiento / Reparación","Insumo","Retiro","Otro"];
+  const esBase = CATS_BASE.includes(catGuardada);
+  gastoCatActiva = catGuardada;
   document.querySelectorAll(".gasto-chip").forEach(b => {
     b.classList.toggle("active", b.dataset.cat === gastoCatActiva);
   });
+  const catCustomInput = document.getElementById("gastoCatCustom");
+  catCustomInput.value = esBase ? "" : catGuardada;
+
+  // Popular datalist de categorías custom
+  const catsDl = document.getElementById("gastoCatList");
+  if (catsDl) {
+    const catsUsadas = new Set();
+    Object.values(cajaData).forEach(dia => {
+      Object.values(dia.gastos || {}).forEach(g => { if (g.cat && !CATS_BASE.includes(g.cat)) catsUsadas.add(g.cat); });
+    });
+    catsDl.innerHTML = [...catsUsadas].sort().map(c => `<option value="${c}">`).join("");
+  }
+
+  // Forma de pago
+  const fp = gasto?.formaPago || "Efectivo";
+  const FPS_BASE = ["Efectivo","Transferencia","Débito","Crédito","Cheque","Depósito","Cuenta corriente","Otro"];
+  const fpSel = document.getElementById("gastoFormaPagoSelect");
+  const fpCustom = document.getElementById("gastoFormaPagoCustom");
+  if (FPS_BASE.includes(fp)) {
+    fpSel.value = fp;
+    fpCustom.style.display = "none";
+    fpCustom.value = "";
+  } else {
+    fpSel.value = "custom";
+    fpCustom.style.display = "block";
+    fpCustom.value = fp;
+  }
+  // Popular datalist de formas de pago custom
+  const fpDl = document.getElementById("gastoFPList");
+  if (fpDl) {
+    const fpsUsadas = new Set();
+    Object.values(cajaData).forEach(dia => {
+      Object.values(dia.gastos || {}).forEach(g => { if (g.formaPago && !FPS_BASE.includes(g.formaPago)) fpsUsadas.add(g.formaPago); });
+    });
+    fpDl.innerHTML = [...fpsUsadas].sort().map(f => `<option value="${f}">`).join("");
+  }
+
   document.getElementById("gastoDescInput").value  = gasto?.desc  || "";
   document.getElementById("gastoMontoInput").value = gasto?.monto || "";
 
@@ -5280,6 +5400,22 @@ document.getElementById("gastoChips")?.addEventListener("click", e => {
   document.querySelectorAll(".gasto-chip").forEach(b => {
     b.classList.toggle("active", b.dataset.cat === gastoCatActiva);
   });
+  document.getElementById("gastoCatCustom").value = "";
+});
+
+// Categoría custom
+document.getElementById("gastoCatCustom")?.addEventListener("input", e => {
+  if (e.target.value.trim()) {
+    gastoCatActiva = e.target.value.trim();
+    document.querySelectorAll(".gasto-chip").forEach(b => b.classList.remove("active"));
+  }
+});
+
+// Forma de pago custom
+document.getElementById("gastoFormaPagoSelect")?.addEventListener("change", e => {
+  const fpCustom = document.getElementById("gastoFormaPagoCustom");
+  fpCustom.style.display = e.target.value === "custom" ? "block" : "none";
+  if (e.target.value !== "custom") fpCustom.value = "";
 });
 
 // Cerrar modal
@@ -5290,7 +5426,6 @@ function cerrarModalGasto() {
 document.getElementById("closeModalGasto")?.addEventListener("click", cerrarModalGasto);
 document.getElementById("btnCancelarGasto")?.addEventListener("click", cerrarModalGasto);
 
-// Confirmar (crear o editar)
 document.getElementById("btnConfirmarGasto")?.addEventListener("click", async () => {
   const monto = parseFloat(document.getElementById("gastoMontoInput").value);
   if (isNaN(monto) || monto <= 0) {
@@ -5300,32 +5435,31 @@ document.getElementById("btnConfirmarGasto")?.addEventListener("click", async ()
   }
 
   const desc  = document.getElementById("gastoDescInput").value.trim();
-  const cat   = gastoCatActiva;
+  const cat   = gastoCatActiva || "Otro";
+  const fpSel = document.getElementById("gastoFormaPagoSelect").value;
+  const formaPago = fpSel === "custom"
+    ? document.getElementById("gastoFormaPagoCustom").value.trim() || "Otro"
+    : fpSel;
   const etiq  = desc ? `${cat} — ${desc}` : cat;
-  const fecha = gastoFechaKey;
+  const fecha = todayKey();
+
+  const gastoData = {
+    cat, desc, monto: Math.round(monto), formaPago,
+    hora: nowHora(), admin: getNombreUsuario()
+  };
 
   if (gastoEditando) {
-    // Editar gasto existente
-    await updateDoc(doc(db, "caja", fecha), {
-      [`gastos.${gastoEditando}`]: {
-        cat, desc, monto: Math.round(monto),
-        hora:  getGastos(fecha)[gastoEditando]?.hora || nowHora(), // conservar hora original
-        admin: getNombreUsuario()
-      }
+    const fechaOrig = document.getElementById("gastoEditId").dataset?.fecha || fecha;
+    gastoData.hora = getGastos(fechaOrig)[gastoEditando]?.hora || nowHora();
+    await updateDoc(doc(db, "caja", fechaOrig), {
+      [`gastos.${gastoEditando}`]: gastoData
     });
     registrarLog("gasto", `Gasto editado — ${fmt(Math.round(monto))} · ${etiq}`);
     showToast("Gasto actualizado ✓", "success");
   } else {
-    // Nuevo gasto
     const gastoId = `g_${Date.now()}`;
     await setDoc(doc(db, "caja", fecha), {
-      gastos: {
-        [gastoId]: {
-          cat, desc, monto: Math.round(monto),
-          hora:  nowHora(),
-          admin: getNombreUsuario()
-        }
-      }
+      gastos: { [gastoId]: gastoData }
     }, { merge: true });
     registrarLog("gasto", `Gasto registrado — ${fmt(Math.round(monto))} · ${etiq}`);
     showToast(`Gasto registrado ✓ — ${fmt(Math.round(monto))}`, "success");
