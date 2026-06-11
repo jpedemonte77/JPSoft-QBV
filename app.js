@@ -1271,8 +1271,11 @@ function calcDescuento(subtotal) {
 }
 
 function renderCart() {
-  const keys      = Object.keys(cart);
-  const subtotal  = keys.reduce((s, k) => s + getPrecioVenta(cart[k].product) * cart[k].qty, 0);
+  const keys     = Object.keys(cart);
+  const subtotal = keys.reduce((s, k) => {
+    const pv = cart[k].precioCombo != null ? cart[k].precioCombo : getPrecioVenta(cart[k].product);
+    return s + pv * cart[k].qty;
+  }, 0);
   const descMonto = calcDescuento(subtotal);
   const total     = subtotal - descMonto;
 
@@ -1536,8 +1539,11 @@ document.getElementById("ventaCartItems")?.addEventListener("change", e => {
 });
 
 function renderModalVenta() {
-  const keys      = Object.keys(cart);
-  const subtotal  = keys.reduce((s, k) => s + getPrecioVenta(cart[k].product) * cart[k].qty, 0);
+  const keys     = Object.keys(cart);
+  const subtotal = keys.reduce((s, k) => {
+    const pv = cart[k].precioCombo != null ? cart[k].precioCombo : getPrecioVenta(cart[k].product);
+    return s + pv * cart[k].qty;
+  }, 0);
   const descMonto = calcDescuento(subtotal);
   const total     = subtotal - descMonto;
   const hora      = nowHora();
@@ -1548,10 +1554,12 @@ function renderModalVenta() {
   if (ventaCart) {
     ventaCart.innerHTML = keys.map((k, i) => {
       const { product: p, qty } = cart[k];
-      const sub = getPrecioVenta(p) * qty;
+      const pv  = cart[k].precioCombo != null ? cart[k].precioCombo : getPrecioVenta(p);
+      const sub = pv * qty;
       const border = i < keys.length - 1 ? "border-bottom:1px solid var(--border);" : "";
+      const esCombo = cart[k].precioCombo != null;
       return `<div style="display:flex;align-items:center;padding:8px 12px;${border}gap:8px;font-size:13px">
-        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">${p.desc}</span>
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:500">${p.desc}${esCombo?` <span style="font-size:10px;padding:1px 5px;border-radius:8px;background:#EEEDFE;color:#3C3489;font-weight:600">COMBO</span>`:""}</span>
         <div style="display:flex;align-items:center;gap:4px;flex-shrink:0">
           <button type="button" class="qty-btn" data-action="minus" data-key="${k}" style="width:22px;height:22px">-</button>
           <input type="number" data-action="qty" data-key="${k}" value="${qty}" min="0" style="width:36px;font-size:12px;font-weight:500;text-align:center;border:1px solid var(--border);border-radius:4px;padding:2px 4px;font-family:inherit" />
@@ -1673,7 +1681,10 @@ async function confirmarVentaFinal() {
 
   const { hora, subtotal: vSubtotal, descMonto: vDesc } = pendiente;
   // Recalcular total con solo ítems válidos
-  const total = keysValidas.reduce((s, k) => s + getPrecioVenta(cart[k].product) * cart[k].qty, 0) - (vDesc || 0);
+  const total = keysValidas.reduce((s, k) => {
+    const pv = cart[k].precioCombo != null ? cart[k].precioCombo : getPrecioVenta(cart[k].product);
+    return s + pv * cart[k].qty;
+  }, 0) - (vDesc || 0);
   const keys = keysValidas;
 
   // 1. Capturar todos los datos ANTES de limpiar el carrito
