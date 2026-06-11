@@ -559,7 +559,7 @@ function rebuildGananciaMap() {
 // ============================================================
 //  NAVEGACIÓN
 // ============================================================
-const VIEWS = { inicio: "Inicio", venta: "Venta", caja: "Caja", notas: "Notas", clientes: "Clientes", gastos: "Gastos", compras: "Compras", productos: "Productos", proveedores: "Proveedores", reportes: "Reportes", "historial-precios": "Historial", actividad: "Actividad", usuarios: "Usuarios", soporte: "Soporte", backup: "Backup" };
+const VIEWS = { inicio: "Inicio", venta: "Venta", caja: "Caja", notas: "Notas", clientes: "Clientes", presupuestos: "Presupuestos", gastos: "Gastos", compras: "Compras", productos: "Productos", proveedores: "Proveedores", reportes: "Reportes", "historial-precios": "Historial", actividad: "Actividad", usuarios: "Usuarios", soporte: "Soporte", backup: "Backup" };
 
 document.querySelectorAll(".nav-item[data-view]").forEach(btn => {
   btn.addEventListener("click", () => {
