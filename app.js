@@ -591,7 +591,11 @@ document.querySelectorAll(".nav-item[data-view]").forEach(btn => {
     }
     if (view === "clientes")          { renderClientesLista(); setTimeout(() => document.getElementById("clientesLista")?.focus(), 100); }
     if (view === "compras")           renderCompras();
-    if (view === "presupuestos")      renderPresupuestos();
+    if (view === "presupuestos") {
+      presupFilaActiva = -1;
+      renderPresupuestos();
+      setTimeout(() => document.getElementById("presupuestosTableBody")?.focus(), 100);
+    }
     if (view === "proveedores")       { provFilaActiva = -1; renderProveedores(); setTimeout(() => document.getElementById("proveedoresGrid")?.focus(), 100); }
   });
 });
@@ -7602,6 +7606,8 @@ function renderPresupItems() {
   if (total) total.textContent = fmt(Math.round(calcTotalPresup()));
 }
 
+let presupFilaActiva = -1;
+
 function renderPresupuestos() {
   const tbody = document.getElementById("presupuestosTableBody");
   const empty = document.getElementById("presupuestosEmpty");
@@ -7614,22 +7620,23 @@ function renderPresupuestos() {
     tbody.innerHTML = ""; empty.style.display = "block"; return;
   }
   empty.style.display = "none";
-  tbody.innerHTML = lista.map(p => {
+  tbody.innerHTML = lista.map((p, idx) => {
     const [fy,fm,fd] = (p.fecha||"").split("-");
     const fechaFmt = p.fecha ? `${parseInt(fd)}/${parseInt(fm)}/${fy}` : "—";
     const prods = (p.items||[]).map(i => `${i.desc}${i.qty>1?` ×${i.qty}`:""}`).join(", ")||"—";
-    return `<tr>
-      <td style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--text2)">#${String(p.nro||0).padStart(4,"0")}</td>
-      <td style="font-size:12px;color:var(--text3)">${fechaFmt}</td>
-      <td style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${p.clienteNombre||"—"}</td>
-      <td style="font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${prods}">${prods}</td>
-      <td class="num" style="font-weight:600">${fmt(p.total||0)}</td>
-      <td>
+    const tdBg = presupFilaActiva === idx ? "background:var(--bg3)" : "";
+    return `<tr class="presup-row" data-id="${p._id}" data-idx="${idx}" style="cursor:pointer">
+      <td style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--text2);${tdBg}">#${String(p.nro||0).padStart(4,"0")}</td>
+      <td style="font-size:12px;color:var(--text3);${tdBg}">${fechaFmt}</td>
+      <td style="font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${tdBg}">${p.clienteNombre||"—"}</td>
+      <td style="font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${tdBg}" title="${prods}">${prods}</td>
+      <td class="num" style="font-weight:600;${tdBg}">${fmt(p.total||0)}</td>
+      <td style="${tdBg}">
         <div style="display:flex;gap:4px;justify-content:flex-end">
-          <button class="btn-secondary" style="font-size:11px;padding:4px 7px" onclick="window._imprimirPresupuesto('${p._id}')">PDF</button>
-          <button class="btn-secondary" style="font-size:11px;padding:4px 7px" onclick="window._convertirPresupuestoEnVenta('${p._id}')">→ Venta</button>
-          <button class="btn-secondary" style="font-size:11px;padding:4px 7px" onclick="window._editarPresupuesto('${p._id}')">Editar</button>
-          <button class="btn-danger" style="font-size:11px;padding:4px 6px" onclick="window._eliminarPresupuesto('${p._id}')">🗑</button>
+          <button class="btn-secondary" style="font-size:11px;padding:4px 7px" onclick="event.stopPropagation();window._imprimirPresupuesto('${p._id}')">PDF</button>
+          <button class="btn-secondary" style="font-size:11px;padding:4px 7px" onclick="event.stopPropagation();window._convertirPresupuestoEnVenta('${p._id}')">→ Venta</button>
+          <button class="btn-secondary" style="font-size:11px;padding:4px 7px" onclick="event.stopPropagation();window._editarPresupuesto('${p._id}')">Editar</button>
+          <button class="btn-danger" style="font-size:11px;padding:4px 6px" onclick="event.stopPropagation();window._eliminarPresupuesto('${p._id}')">🗑</button>
         </div>
       </td>
     </tr>`;
@@ -7722,6 +7729,33 @@ document.getElementById("presupItems")?.addEventListener("click", e => {
 });
 
 document.getElementById("presupuestosSearch")?.addEventListener("input", renderPresupuestos);
+
+// Navegación con teclado
+document.getElementById("presupuestosTableBody")?.addEventListener("keydown", e => {
+  if (["ArrowDown","ArrowUp","Enter","Escape"].indexOf(e.key) === -1) return;
+  e.preventDefault(); e.stopPropagation();
+  const q = (document.getElementById("presupuestosSearch")?.value||"").toLowerCase();
+  const lista = [...presupuestosData]
+    .filter(p => !q || (p.clienteNombre||"").toLowerCase().includes(q) || (p.nro||"").toString().includes(q))
+    .sort((a,b) => (b.ts||"").localeCompare(a.ts||""));
+  if (!lista.length) return;
+  if (e.key === "ArrowDown")  presupFilaActiva = Math.min(presupFilaActiva + 1, lista.length - 1);
+  else if (e.key === "ArrowUp") presupFilaActiva = Math.max(presupFilaActiva - 1, 0);
+  else if (e.key === "Enter" && presupFilaActiva >= 0) { window._editarPresupuesto(lista[presupFilaActiva]._id); return; }
+  else if (e.key === "Escape") { presupFilaActiva = -1; }
+  renderPresupuestos();
+  document.querySelector(`.presup-row[data-idx="${presupFilaActiva}"]`)?.scrollIntoView({ block:"nearest" });
+  requestAnimationFrame(() => document.getElementById("presupuestosTableBody")?.focus());
+});
+
+// Click en fila abre editar
+document.getElementById("presupuestosTableBody")?.addEventListener("click", e => {
+  const row = e.target.closest(".presup-row");
+  if (row && !e.target.closest("button")) {
+    presupFilaActiva = parseInt(row.dataset.idx);
+    window._editarPresupuesto(row.dataset.id);
+  }
+});
 
 // Guardar presupuesto
 document.getElementById("btnGuardarPresupuesto")?.addEventListener("click", async () => {
