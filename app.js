@@ -3176,8 +3176,6 @@ document.getElementById("vf-tipo")?.addEventListener("change", function() {
   tipoCustom.style.display = this.value === "custom" ? "block" : "none";
   if (this.value !== "custom") tipoCustom.value = "";
 });
-  }
-});
 
 function abrirModalProveedor(id) {
   provEditId = id;
@@ -3241,7 +3239,6 @@ function cerrarModalProveedor() {
 document.getElementById("btnGuardarProveedor").addEventListener("click", async () => {
   const nombre   = document.getElementById("vf-nombre").value.trim();
   const ganancia = parseFloat(document.getElementById("vf-ganancia").value);
-  const tipo     = document.getElementById("vf-tipo").value;
   if (!nombre) { showToast("Ingresá el nombre del proveedor.", "error"); return; }
   if (isNaN(ganancia) || ganancia < 0) { showToast("Ingresá un margen válido (0 o más).", "error"); return; }
 
