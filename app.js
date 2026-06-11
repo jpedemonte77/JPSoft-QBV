@@ -1773,6 +1773,7 @@ async function confirmarVentaFinal() {
   setDoc(cajaRef, { [_turno]: { ...turnoData, ventas: ventasActuales } }, { merge: true });
 
   Object.entries(stockUpdates).forEach(([prodId, val]) => {
+    console.log("Stock update:", prodId, "->", val);
     updateDoc(doc(db, 'productos', prodId), { stock: val });
   });
 }
