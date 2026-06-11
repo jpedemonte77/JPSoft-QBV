@@ -2751,6 +2751,8 @@ window._verComprasProducto = function(prodId, desc) {
 document.getElementById("closeModalComprasProducto")?.addEventListener("click",  () => document.getElementById("modalComprasProducto").classList.add("hidden"));
 document.getElementById("closeModalComprasProducto2")?.addEventListener("click", () => document.getElementById("modalComprasProducto").classList.add("hidden"));
 document.getElementById("modalComprasProducto")?.addEventListener("click", e => { if (e.target === e.currentTarget) e.currentTarget.classList.add("hidden"); });
+
+document.getElementById("btnFiltroAlerta")?.addEventListener("click", function() {
   soloConAlerta = !soloConAlerta;
   this.style.background = soloConAlerta ? "var(--danger-bg)" : "";
   this.style.borderColor = soloConAlerta ? "var(--danger-border)" : "";
