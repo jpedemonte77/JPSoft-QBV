@@ -2980,58 +2980,89 @@ document.getElementById("btnGuardarMargenGeneral")?.addEventListener("click",   
 document.getElementById("btnGuardarMargenTabaco")?.addEventListener("click",      () => guardarMargen("tabaco"));
 document.getElementById("btnGuardarMargenCigarrillos")?.addEventListener("click", () => guardarMargen("cigarrillos"));
 
+let provFilaActiva = -1;
+
 function renderProveedores() {
-  const grid  = document.getElementById("proveedoresGrid");
+  const tbody = document.getElementById("proveedoresGrid");
+  const empty = document.getElementById("proveedoresEmpty");
   const lista = Object.entries(proveedores).sort((a,b) => a[1].nombre.localeCompare(b[1].nombre));
 
   if (!lista.length) {
-    grid.innerHTML = `<div class="empty-row">No hay proveedores. Creá el primero con el botón de arriba.</div>`;
+    tbody.innerHTML = "";
+    if (empty) empty.style.display = "block";
     return;
   }
+  if (empty) empty.style.display = "none";
 
-  grid.innerHTML = lista.map(([id, p]) => {
-    const tipo     = p.tipo || (p.tabaco ? "tabaco" : "general");
+  tbody.innerHTML = lista.map(([id, p], idx) => {
+    const tipo     = p.tipo || "General";
     const cantProd = allProducts.filter(x => x.proveedor === p.nombre).length;
+    const highlighted = provFilaActiva === idx;
+    const tdBg = highlighted ? "background:var(--bg3)" : "";
 
     // WhatsApp
     let waHref = null;
     if (p.whatsapp) {
       let tel = p.whatsapp.replace(/\D/g, "");
-      if (tel.startsWith("549") || tel.startsWith("541")) {}
-      else if (tel.startsWith("54")) tel = "549" + tel.slice(2);
-      else if (tel.startsWith("0"))  tel = "549" + tel.slice(1);
-      else if (tel.startsWith("9"))  tel = "54"  + tel;
-      else                            tel = "549" + tel;
+      if (!tel.startsWith("549") && !tel.startsWith("541")) {
+        if (tel.startsWith("54")) tel = "549" + tel.slice(2);
+        else if (tel.startsWith("0")) tel = "549" + tel.slice(1);
+        else if (tel.startsWith("9")) tel = "54" + tel;
+        else tel = "549" + tel;
+      }
       waHref = `https://wa.me/${tel}`;
     }
 
-    const contacto = [
-      p.whatsapp ? `<div class="proveedor-row"><span class="label">WhatsApp</span><span class="val">${p.whatsapp}</span></div>` : "",
-      p.email    ? `<div class="proveedor-row"><span class="label">Email</span><span class="val" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px">${p.email}</span></div>` : "",
-      p.direccion ? `<div class="proveedor-row"><span class="label">Dirección</span><span class="val">${p.direccion}${p.cp ? ` (${p.cp})` : ""}</span></div>` : "",
-      p.localidad ? `<div class="proveedor-row"><span class="label">Localidad</span><span class="val">${p.localidad}</span></div>` : "",
-    ].filter(Boolean).join("");
-
-    return `<div class="proveedor-card">
-      <div class="proveedor-card-header">
-        <div class="proveedor-nombre">${p.nombre}</div>
-        <span class="badge ${TIPO_BADGE[tipo] || "badge-neutral"}">${TIPO_LABEL[tipo] || tipo}</span>
-      </div>
-      <div class="proveedor-row"><span class="label">Margen ganancia</span><span class="val"><span class="badge ${TIPO_BADGE[tipo] || "badge-neutral"}">${p.ganancia ?? 0}%</span></span></div>
-      <div class="proveedor-row"><span class="label">Productos</span><span class="val">${cantProd}</span></div>
-      ${p.categoria ? `<div class="proveedor-row"><span class="label">Categoría</span><span class="val">${p.categoria}</span></div>` : ""}
-      ${contacto}
-      <div class="proveedor-actions">
-        ${waHref ? `<a href="${waHref}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:var(--radius-sm);background:#E1F5EE;border:1px solid #9FE1CB;font-size:12px;color:#0F6E56;text-decoration:none">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="#1D9E75"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12.05 2C6.495 2 2 6.495 2 12.05c0 1.868.497 3.623 1.362 5.14L2 22l4.948-1.337A10.01 10.01 0 0 0 12.05 22C17.605 22 22 17.505 22 11.95 22 6.495 17.605 2 12.05 2zm0 18.385a8.33 8.33 0 0 1-4.239-1.158l-.304-.18-3.143.849.845-3.073-.198-.315A8.324 8.324 0 0 1 3.715 12.05c0-4.598 3.737-8.335 8.335-8.335 4.598 0 8.335 3.737 8.335 8.335 0 4.598-3.737 8.335-8.335 8.335z"/></svg>
-          Contactar
-        </a>` : ""}
-        <button class="btn-secondary" style="font-size:12px;padding:5px 10px;flex:1" onclick="window._filtrarPorProv('${p.nombre}')">Ver productos</button>
-        <button class="btn-secondary" style="font-size:12px;padding:5px 10px;flex:1" onclick="window._editarProveedor('${id}')">Editar</button>
-        <button class="btn-danger" style="font-size:12px;padding:5px 10px" onclick="window._eliminarProveedor('${id}','${(p.nombre||'').replace(/'/g,'&#39;')}',${cantProd})">🗑</button>
-      </div>
-    </div>`;
+    return `<tr class="prov-row" data-id="${id}" data-idx="${idx}" style="cursor:pointer">
+      <td style="font-weight:500;color:var(--text1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${tdBg}">${p.nombre||"—"}</td>
+      <td style="font-size:12px;${tdBg}"><span style="font-size:11px;padding:2px 7px;border-radius:10px;background:var(--surface2);color:var(--text2)">${tipo}</span></td>
+      <td style="font-size:12px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${tdBg}">${p.categoria||"—"}</td>
+      <td style="font-size:12px;color:var(--text2);white-space:nowrap;${tdBg}">${p.whatsapp||"—"}</td>
+      <td style="font-size:12px;color:var(--text2);white-space:nowrap;${tdBg}">${p.localidad||"—"}</td>
+      <td class="num" style="font-weight:600;${tdBg}">${p.ganancia??0}%</td>
+      <td class="num" style="${tdBg}">${cantProd}</td>
+      <td style="${tdBg}">
+        <div style="display:flex;gap:4px;justify-content:flex-end">
+          ${waHref ? `<a href="${waHref}" target="_blank" rel="noopener" onclick="event.stopPropagation()" style="display:inline-flex;align-items:center;padding:4px 7px;border-radius:var(--radius-sm);background:#E1F5EE;border:1px solid #9FE1CB;font-size:11px;color:#0F6E56;text-decoration:none">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="#1D9E75"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12.05 2C6.495 2 2 6.495 2 12.05c0 1.868.497 3.623 1.362 5.14L2 22l4.948-1.337A10.01 10.01 0 0 0 12.05 22C17.605 22 22 17.505 22 11.95 22 6.495 17.605 2 12.05 2zm0 18.385a8.33 8.33 0 0 1-4.239-1.158l-.304-.18-3.143.849.845-3.073-.198-.315A8.324 8.324 0 0 1 3.715 12.05c0-4.598 3.737-8.335 8.335-8.335 4.598 0 8.335 3.737 8.335 8.335 0 4.598-3.737 8.335-8.335 8.335z"/></svg>
+          </a>` : ""}
+          <button class="btn-secondary" style="font-size:11px;padding:4px 7px" onclick="event.stopPropagation();window._filtrarPorProv('${p.nombre}')">Productos</button>
+          <button class="btn-secondary" style="font-size:11px;padding:4px 7px" onclick="event.stopPropagation();window._editarProveedor('${id}')">Editar</button>
+          <button class="btn-danger" style="font-size:11px;padding:4px 6px" onclick="event.stopPropagation();window._eliminarProveedor('${id}','${(p.nombre||'').replace(/'/g,"&#39;")}',${cantProd})">🗑</button>
+        </div>
+      </td>
+    </tr>`;
   }).join("");
+}
+
+// ── Navegación con teclado en proveedores ──
+document.getElementById("proveedoresGrid")?.addEventListener("keydown", e => {
+  const lista = Object.entries(proveedores).sort((a,b) => a[1].nombre.localeCompare(b[1].nombre));
+  if (!lista.length) return;
+  if (e.key === "ArrowDown") {
+    e.preventDefault();
+    provFilaActiva = Math.min(provFilaActiva + 1, lista.length - 1);
+    renderProveedores();
+    document.querySelector(`.prov-row[data-idx="${provFilaActiva}"]`)?.scrollIntoView({ block:"nearest" });
+  } else if (e.key === "ArrowUp") {
+    e.preventDefault();
+    provFilaActiva = Math.max(provFilaActiva - 1, 0);
+    renderProveedores();
+    document.querySelector(`.prov-row[data-idx="${provFilaActiva}"]`)?.scrollIntoView({ block:"nearest" });
+  } else if (e.key === "Enter" && provFilaActiva >= 0) {
+    e.preventDefault();
+    window._editarProveedor(lista[provFilaActiva][0]);
+  } else if (e.key === "Escape") {
+    provFilaActiva = -1; renderProveedores();
+  }
+});
+
+// Click en fila
+document.getElementById("proveedoresGrid")?.addEventListener("click", e => {
+  const row = e.target.closest(".prov-row");
+  if (row) window._editarProveedor(row.dataset.id);
+});
+
 }
 
 window._eliminarProveedor = function(id, nombre, cantProd) {
@@ -3065,21 +3096,88 @@ document.getElementById("btnExportarProveedoresExcel")?.addEventListener("click"
   const data = [["Nombre","Tipo","Categoría","Margen %","WhatsApp","Email","Dirección","Localidad","CP","Productos"]];
   lista.forEach(p => {
     const cantProd = allProducts.filter(x => x.proveedor === p.nombre).length;
-    data.push([p.nombre||"",p.tipo||"",p.categoria||"",p.ganancia??0,p.whatsapp||"",p.email||"",p.direccion||"",p.localidad||"",p.cp||"",cantProd]);
+    data.push([p.nombre||"",p.tipo||"General",p.categoria||"",p.ganancia??0,p.whatsapp||"",p.email||"",p.direccion||"",p.localidad||"",p.cp||"",cantProd]);
   });
   exportarExcel([{ nombre:"Proveedores", data, colsMoney:[] }], `JPSoft_Tienda_Proveedores_${todayKey()}.xlsx`);
 });
 
+// Imprimir Proveedores PDF
+document.getElementById("btnImprimirProveedoresPDF")?.addEventListener("click", async () => {
+  const lista = Object.values(proveedores).sort((a,b) => (a.nombre||"").localeCompare(b.nombre||""));
+  if (!lista.length) { showToast("No hay proveedores para imprimir.", "warning"); return; }
+  const now = new Date().toLocaleDateString("es-AR", { day:"2-digit", month:"2-digit", year:"numeric" });
+
+  const filas = lista.map(p => {
+    const cantProd = allProducts.filter(x => x.proveedor === p.nombre).length;
+    return `<tr style="border-bottom:1px solid #f0f0f0">
+      <td style="padding:5px 8px;font-weight:500">${p.nombre||"—"}</td>
+      <td style="padding:5px 8px;font-size:12px">${p.tipo||"General"}</td>
+      <td style="padding:5px 8px;font-size:12px;color:#666">${p.categoria||"—"}</td>
+      <td style="padding:5px 8px;font-size:12px">${p.whatsapp||"—"}</td>
+      <td style="padding:5px 8px;font-size:12px;color:#666">${p.localidad||"—"}</td>
+      <td style="padding:5px 8px;text-align:right;font-weight:600">${p.ganancia??0}%</td>
+      <td style="padding:5px 8px;text-align:right;font-size:12px">${cantProd}</td>
+    </tr>`;
+  }).join("");
+
+  const content = `
+    <div style="font-family:'DM Sans',sans-serif;font-size:13px;color:#111;padding:2rem;max-width:680px;margin:0 auto">
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px">
+        <div style="font-size:18px;font-weight:600">JPSoft | Tienda</div>
+        <div style="font-size:11px;color:#888">Generado el ${now}</div>
+      </div>
+      <div style="font-size:12px;color:#888;margin-bottom:1.25rem">Proveedores — ${lista.length} registros</div>
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        <thead>
+          <tr style="background:#f5f5f5;font-size:10px;color:#aaa;text-transform:uppercase;letter-spacing:.05em">
+            <th style="padding:6px 8px;text-align:left;font-weight:500;border-bottom:1px solid #eee">Nombre</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:500;border-bottom:1px solid #eee">Tipo</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:500;border-bottom:1px solid #eee">Categoría</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:500;border-bottom:1px solid #eee">WhatsApp</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:500;border-bottom:1px solid #eee">Localidad</th>
+            <th style="padding:6px 8px;text-align:right;font-weight:500;border-bottom:1px solid #eee">Margen%</th>
+            <th style="padding:6px 8px;text-align:right;font-weight:500;border-bottom:1px solid #eee">Prods.</th>
+          </tr>
+        </thead>
+        <tbody>${filas}</tbody>
+      </table>
+    </div>`;
+
+  const btn = document.getElementById("btnImprimirProveedoresPDF");
+  const orig = btn.innerHTML;
+  btn.disabled = true; btn.textContent = "Generando…";
+  const container = document.createElement("div");
+  container.style.cssText = "position:fixed;left:-9999px;top:0;width:720px;background:#fff";
+  container.innerHTML = content;
+  document.body.appendChild(container);
+  try {
+    const canvas = await html2canvas(container, { scale:2, useCORS:true, backgroundColor:"#fff" });
+    const { jsPDF } = window.jspdf;
+    const pdf  = new jsPDF({ orientation:"landscape", unit:"mm", format:"a4" });
+    const imgW = 297;
+    const imgH = (canvas.height * imgW) / canvas.width;
+    const pages = Math.ceil(imgH / 210);
+    for (let i = 0; i < pages; i++) {
+      if (i > 0) pdf.addPage();
+      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, -i*210, imgW, imgH);
+    }
+    pdf.save(`JPSoft_Tienda_Proveedores_${todayKey()}.pdf`);
+    showToast("PDF generado ✓", "success");
+  } catch(err) {
+    showToast("Error al generar PDF: " + err.message, "error");
+  } finally {
+    document.body.removeChild(container);
+    btn.disabled = false; btn.innerHTML = orig;
+  }
+});
+
 window._editarProveedor = function(id) { abrirModalProveedor(id); };
 
-// Al cambiar el tipo, pre-cargar el margen global correspondiente
 document.getElementById("vf-tipo")?.addEventListener("change", function() {
-  const tipo = this.value;
-  const margen = margenesConfig[tipo] ?? (tipo === "general" ? 50 : tipo === "tabaco" ? 30 : 20);
-  // Solo pre-cargar si es un proveedor nuevo (no editando)
-  if (!provEditId) {
-    document.getElementById("vf-ganancia").value = margen;
-    document.getElementById("vf-ganancia-hint").textContent = `Pre-cargado desde márgenes globales (${margen}%)`;
+  const tipoCustom = document.getElementById("vf-tipo-custom");
+  tipoCustom.style.display = this.value === "custom" ? "block" : "none";
+  if (this.value !== "custom") tipoCustom.value = "";
+});
   }
 });
 
@@ -3088,24 +3186,53 @@ function abrirModalProveedor(id) {
   document.getElementById("modalProveedorTitulo").textContent = id ? "Editar proveedor" : "Nuevo proveedor";
   document.getElementById("btnEliminarProveedor").classList.toggle("hidden", !id);
   const p = id ? proveedores[id] : {};
-  const tipo = p?.tipo || (p?.tabaco ? "tabaco" : "general");
+
+  // Popular datalist de tipos custom
+  const tiposDl = document.getElementById("provTipoList");
+  const tiposUsados = new Set();
+  Object.values(proveedores).forEach(pv => { if (pv.tipo && pv.tipo !== "General") tiposUsados.add(pv.tipo); });
+  if (tiposDl) tiposDl.innerHTML = [...tiposUsados].sort().map(t => `<option value="${t}">`).join("");
+
+  // Popular select de tipos
+  const tipoSel    = document.getElementById("vf-tipo");
+  const tipoCustom = document.getElementById("vf-tipo-custom");
+  const tipoActual = p?.tipo || "General";
+  // Reconstruir opciones
+  tipoSel.innerHTML = '<option value="General">General</option>';
+  [...tiposUsados].sort().forEach(t => {
+    const opt = document.createElement("option");
+    opt.value = t; opt.textContent = t;
+    tipoSel.appendChild(opt);
+  });
+  tipoSel.innerHTML += '<option value="custom">+ Nuevo tipo…</option>';
+  if (tipoActual === "General" || tiposUsados.has(tipoActual)) {
+    tipoSel.value = tipoActual;
+    tipoCustom.style.display = "none";
+    tipoCustom.value = "";
+  } else {
+    tipoSel.value = "custom";
+    tipoCustom.style.display = "block";
+    tipoCustom.value = tipoActual;
+  }
+
   document.getElementById("vf-nombre").value    = p?.nombre    || "";
-  document.getElementById("vf-tipo").value      = tipo;
   document.getElementById("vf-categoria").value = p?.categoria || "";
   document.getElementById("vf-whatsapp").value  = p?.whatsapp  || "";
   document.getElementById("vf-email").value     = p?.email     || "";
   document.getElementById("vf-direccion").value = p?.direccion || "";
   document.getElementById("vf-localidad").value = p?.localidad || "";
   document.getElementById("vf-cp").value        = p?.cp        || "";
+
   if (id) {
     document.getElementById("vf-ganancia").value = p?.ganancia ?? "";
     document.getElementById("vf-ganancia-hint").textContent = "Margen actual del proveedor";
   } else {
-    const margenDefault = margenesConfig[tipo] ?? 50;
+    const margenDefault = margenesConfig["general"] ?? 50;
     document.getElementById("vf-ganancia").value = margenDefault;
     document.getElementById("vf-ganancia-hint").textContent = `Pre-cargado desde márgenes globales (${margenDefault}%)`;
   }
   document.getElementById("modalProveedor").classList.remove("hidden");
+  setTimeout(() => document.getElementById("vf-nombre").focus(), 80);
 }
 
 function cerrarModalProveedor() {
@@ -3120,9 +3247,13 @@ document.getElementById("btnGuardarProveedor").addEventListener("click", async (
   if (!nombre) { showToast("Ingresá el nombre del proveedor.", "error"); return; }
   if (isNaN(ganancia) || ganancia < 0) { showToast("Ingresá un margen válido (0 o más).", "error"); return; }
 
+  const tipoSel    = document.getElementById("vf-tipo").value;
+  const tipoCustom = document.getElementById("vf-tipo-custom").value.trim();
+  const tipo = tipoSel === "custom" ? (tipoCustom || "General") : tipoSel;
+
   const data = {
     nombre, ganancia, tipo,
-    tabaco:    tipo === "tabaco" || tipo === "cigarrillos",
+    tabaco: false,
     categoria: document.getElementById("vf-categoria").value.trim(),
     whatsapp:  document.getElementById("vf-whatsapp").value.trim(),
     email:     document.getElementById("vf-email").value.trim(),
