@@ -480,22 +480,36 @@
         </div>
       </div>
 
+      <!-- Filtros de fecha -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+        <div style="font-size:12px;color:var(--text2)">Desde:</div>
+        <input type="date" class="form-input" id="gastosFechaDesde" style="width:140px;font-size:12px" />
+        <div style="font-size:12px;color:var(--text2)">Hasta:</div>
+        <input type="date" class="form-input" id="gastosFechaHasta" style="width:140px;font-size:12px" />
+        <button class="btn-secondary" id="btnGastosFiltrarFecha" style="font-size:12px;padding:5px 12px">Filtrar</button>
+        <button class="btn-secondary" id="btnGastosHoy" style="font-size:12px;padding:5px 12px">Hoy</button>
+      </div>
+
       <!-- Tabla de gastos -->
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
-        <table>
+        <table style="table-layout:fixed;width:100%">
           <colgroup>
-            <col style="width:80px">
-            <col style="width:140px">
-            <col>
-            <col style="width:110px">
-            <col style="width:100px">
+            <col style="width:90px">
+            <col style="width:70px">
             <col style="width:150px">
+            <col>
+            <col style="width:120px">
+            <col style="width:90px">
+            <col style="width:80px">
+            <col style="width:130px">
           </colgroup>
           <thead>
             <tr>
+              <th>Fecha</th>
               <th>Hora</th>
               <th>Categoría</th>
-              <th>Descripción</th>
+              <th>Detalle</th>
+              <th>Forma de pago</th>
               <th class="num">Monto</th>
               <th>Usuario</th>
               <th></th>
@@ -503,7 +517,11 @@
           </thead>
           <tbody id="gastosTableBody"></tbody>
         </table>
-        <div class="empty-row" id="gastosEmptyMsg" style="display:none">No hay gastos registrados para este día.</div>
+        <div class="empty-row" id="gastosEmptyMsg" style="display:none">No hay gastos registrados para este período.</div>
+        <div id="gastosTotalPie" style="display:none;padding:8px 14px;border-top:1px solid var(--border);justify-content:space-between;align-items:center;background:var(--surface2)">
+          <span style="font-size:12px;color:var(--text3)" id="gastosTotalCant"></span>
+          <span style="font-size:14px;font-weight:600;color:var(--text1)">Total: <span id="gastosTotalMonto" style="font-family:'DM Mono',monospace">$0</span></span>
+        </div>
       </div>
     </div>
 
@@ -1584,34 +1602,66 @@
      MODAL: REGISTRAR GASTO
 ══════════════════════════════ -->
 <div class="modal-overlay hidden" id="modalGasto">
-  <div class="modal" style="max-width:420px">
+  <div class="modal" style="max-width:440px">
     <div class="modal-header">
       <span class="modal-title" id="modalGastoTitulo">Registrar gasto</span>
       <button class="modal-close" id="closeModalGasto">✕</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" style="padding:10px 16px">
       <input type="hidden" id="gastoEditId" />
-      <!-- Chips de categoría -->
-      <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px">Categoría</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="gastoChips">
-        <button class="gasto-chip active" data-cat="Pago de impuesto">Pago de impuesto</button>
-        <button class="gasto-chip" data-cat="Pago de servicio">Pago de servicio</button>
-        <button class="gasto-chip" data-cat="Insumo">Insumo</button>
-        <button class="gasto-chip" data-cat="Retiro">Retiro</button>
-        <button class="gasto-chip" data-cat="Otro">Otro</button>
+
+      <!-- Categoría -->
+      <div class="form-group" style="margin-bottom:8px">
+        <label class="form-label" style="margin-bottom:4px">Categoría</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px" id="gastoChips">
+          <button class="gasto-chip active" data-cat="Impuesto / Tasa">Impuesto / Tasa</button>
+          <button class="gasto-chip" data-cat="Servicio">Servicio</button>
+          <button class="gasto-chip" data-cat="Seguro">Seguro</button>
+          <button class="gasto-chip" data-cat="Mantenimiento / Reparación">Mantenimiento / Reparación</button>
+          <button class="gasto-chip" data-cat="Insumo">Insumo</button>
+          <button class="gasto-chip" data-cat="Retiro">Retiro</button>
+          <button class="gasto-chip" data-cat="Otro">Otro</button>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center">
+          <input type="text" class="form-input" id="gastoCatCustom" placeholder="O escribí una categoría nueva…" list="gastoCatList" autocomplete="off" style="flex:1;font-size:12px" />
+          <datalist id="gastoCatList"></datalist>
+        </div>
       </div>
-      <!-- Descripción -->
-      <div class="form-group">
-        <label class="form-label">Descripción <span style="font-weight:400;color:var(--text3)">(opcional)</span></label>
-        <input type="text" class="form-input" id="gastoDescInput" placeholder="Ej: Pago factura de luz" maxlength="100" />
+
+      <!-- Detalle -->
+      <div class="form-group" style="margin-bottom:8px">
+        <label class="form-label" style="margin-bottom:3px">Detalle <span style="font-weight:400;color:var(--text3)">(opcional)</span></label>
+        <input type="text" class="form-input" id="gastoDescInput" placeholder="Ej: Alquiler Febrero, Carga en YPF…" maxlength="120" />
       </div>
-      <!-- Monto -->
-      <div class="form-group" style="margin-top:10px">
-        <label class="form-label">Monto ($)</label>
-        <input type="number" class="form-input" id="gastoMontoInput" placeholder="0" min="0" style="font-size:18px;font-weight:600;font-family:'DM Mono',monospace" />
+
+      <!-- Monto y Forma de pago -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:0">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">Monto ($)</label>
+          <input type="number" class="form-input" id="gastoMontoInput" placeholder="0" min="0" style="font-size:18px;font-weight:600;font-family:'DM Mono',monospace" />
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label" style="margin-bottom:3px">Forma de pago</label>
+          <div style="display:flex;gap:5px">
+            <select class="form-select" id="gastoFormaPagoSelect" style="flex:1;font-size:13px">
+              <option value="Efectivo">Efectivo</option>
+              <option value="Transferencia">Transferencia</option>
+              <option value="Débito">Débito</option>
+              <option value="Crédito">Crédito</option>
+              <option value="Cheque">Cheque</option>
+              <option value="Depósito">Depósito</option>
+              <option value="Cuenta corriente">Cuenta corriente</option>
+              <option value="Otro">Otro</option>
+              <option value="custom">+ Nueva…</option>
+            </select>
+          </div>
+          <input type="text" class="form-input" id="gastoFormaPagoCustom" placeholder="Ej: Billetera virtual…" list="gastoFPList" autocomplete="off"
+            style="display:none;margin-top:5px;font-size:12px" />
+          <datalist id="gastoFPList"></datalist>
+        </div>
       </div>
     </div>
-    <div class="modal-footer">
+    <div class="modal-footer" style="padding:8px 16px">
       <button class="btn-secondary" id="btnCancelarGasto">Cancelar</button>
       <button class="btn-primary" id="btnConfirmarGasto">Registrar</button>
     </div>
