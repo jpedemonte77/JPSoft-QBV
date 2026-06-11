@@ -1691,7 +1691,14 @@ async function confirmarVentaFinal() {
   const items = keys.map(k => {
     const { product: p, qty } = cart[k];
     const pv = cart[k].precioCombo != null ? cart[k].precioCombo : Math.round(getPrecioVenta(p));
-    return { desc: p.desc, qty, precioUnit: pv, subtotal: Math.round(pv * qty), proveedor: p.proveedor, esCombo: p.esCombo||false };
+    return {
+      desc:      p.desc       || "",
+      qty,
+      precioUnit: pv,
+      subtotal:  Math.round(pv * qty),
+      proveedor: p.proveedor  || "",
+      esCombo:   p.esCombo    || false
+    };
   });
 
   const stockUpdates = {};
@@ -1773,7 +1780,6 @@ async function confirmarVentaFinal() {
   setDoc(cajaRef, { [_turno]: { ...turnoData, ventas: ventasActuales } }, { merge: true });
 
   Object.entries(stockUpdates).forEach(([prodId, val]) => {
-    console.log("Stock update:", prodId, "->", val);
     updateDoc(doc(db, 'productos', prodId), { stock: val });
   });
 }
