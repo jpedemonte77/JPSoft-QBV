@@ -1442,3 +1442,10 @@ tr.fila-activa td { background: var(--info-bg); }
 }
 .hist-periodo:hover { border-color: var(--accent); color: var(--accent); }
 .hist-periodo.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+/* Quitar outline de foco en tbodys navegables con teclado */
+#proveedoresGrid:focus,
+#gastosTableBody:focus,
+#clientesLista:focus {
+  outline: none !important;
+}
