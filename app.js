@@ -8389,7 +8389,6 @@ function aplicarModo() {
   if (modoActual === "basico")        visibles = [...SECCIONES_FIJAS];
   else if (modoActual === "avanzado") visibles = [...SECCIONES_AVANZADO];
   else {
-    // Personalizado: insertar opcionales activos en su posición del orden avanzado
     visibles = SECCIONES_AVANZADO.filter(s =>
       SECCIONES_FIJAS.includes(s) || opcionalesActivos.includes(s)
     );
@@ -8398,20 +8397,33 @@ function aplicarModo() {
   const nav = document.querySelector(".sidebar-nav");
   if (!nav) return;
 
-  // Reordenar físicamente los botones según el orden de visibles
+  // Primero ocultar todos
+  nav.querySelectorAll("[data-view]").forEach(btn => btn.style.display = "none");
+
+  // Luego reordenar y mostrar en el orden correcto
   visibles.forEach(view => {
     const btn = nav.querySelector(`[data-view="${view}"]`);
-    if (btn) { btn.style.display = ""; nav.appendChild(btn); }
-  });
-
-  // Ocultar los que no están en visibles
-  nav.querySelectorAll("[data-view]").forEach(btn => {
-    if (!visibles.includes(btn.dataset.view)) btn.style.display = "none";
+    if (btn) {
+      btn.style.display = "";
+      nav.appendChild(btn);
+    }
   });
 }
 
-// Cargar modo al iniciar
+// Cargar modo al iniciar — espera Firestore antes de aplicar
 async function cargarModoInicial() {
+  // Primero aplicar desde localStorage para evitar flash
+  const saved = localStorage.getItem("jpsoft_modo");
+  if (saved) {
+    try {
+      const d = JSON.parse(saved);
+      modoActual        = d.modo       || "avanzado";
+      opcionalesActivos = d.opcionales || [];
+    } catch(e) {}
+  }
+  aplicarModo();
+
+  // Luego sincronizar con Firestore
   try {
     const snap = await getDoc(doc(db, "config", "modo"));
     if (snap.exists()) {
@@ -8419,10 +8431,7 @@ async function cargarModoInicial() {
       modoActual        = d.modo       || "avanzado";
       opcionalesActivos = d.opcionales || [];
       localStorage.setItem("jpsoft_modo", JSON.stringify({ modo: modoActual, opcionales: opcionalesActivos }));
+      aplicarModo();
     }
-  } catch(e) {
-    const saved = localStorage.getItem("jpsoft_modo");
-    if (saved) { try { const d = JSON.parse(saved); modoActual = d.modo || "avanzado"; opcionalesActivos = d.opcionales || []; } catch(e) {} }
-  }
-  aplicarModo();
+  } catch(e) {}
 }
