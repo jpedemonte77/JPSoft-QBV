@@ -8423,35 +8423,8 @@ document.getElementById("btnGuardarModo")?.addEventListener("click", async () =>
   registrarLog("config", `Modo de visualización cambiado a: ${modoActual}`);
 });
 
-function aplicarModo() {
-  let visibles = [];
-  if (modoActual === "basico")        visibles = [...SECCIONES_FIJAS];
-  else if (modoActual === "avanzado") visibles = [...SECCIONES_AVANZADO];
-  else {
-    visibles = SECCIONES_AVANZADO.filter(s =>
-      SECCIONES_FIJAS.includes(s) || opcionalesActivos.includes(s)
-    );
-  }
-
-  const nav = document.querySelector(".sidebar-nav");
-  if (!nav) return;
-
-  // Primero ocultar todos
-  nav.querySelectorAll("[data-view]").forEach(btn => btn.style.display = "none");
-
-  // Luego reordenar y mostrar en el orden correcto
-  visibles.forEach(view => {
-    const btn = nav.querySelector(`[data-view="${view}"]`);
-    if (btn) {
-      btn.style.display = "";
-      nav.appendChild(btn);
-    }
-  });
-}
-
-// Cargar modo al iniciar — espera Firestore antes de aplicar
+// Cargar modo al iniciar
 async function cargarModoInicial() {
-  // Primero aplicar desde localStorage para evitar flash
   const saved = localStorage.getItem("jpsoft_modo");
   if (saved) {
     try {
@@ -8461,8 +8434,6 @@ async function cargarModoInicial() {
     } catch(e) {}
   }
   aplicarModo();
-
-  // Luego sincronizar con Firestore
   try {
     const snap = await getDoc(doc(db, "config", "modo"));
     if (snap.exists()) {
