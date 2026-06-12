@@ -383,6 +383,19 @@ async function mostrarApp(email, uid = null) {
   }, 600);
 }
 
+// Aplicar modo guardado inmediatamente al cargar la página (antes del login)
+(function() {
+  const saved = localStorage.getItem("jpsoft_modo");
+  if (saved) {
+    try {
+      const d = JSON.parse(saved);
+      modoActual        = d.modo       || "avanzado";
+      opcionalesActivos = d.opcionales || [];
+    } catch(e) {}
+  }
+  aplicarModo();
+})();
+
 onAuthStateChanged(auth, user => {
   if (user) {
     mostrarApp(user.email, user.uid);
@@ -8282,8 +8295,34 @@ const SECCIONES_FIJAS    = ["inicio","venta","caja","productos","proveedores","c
 const SECCIONES_OPCIONALES = ["gastos","combos","compras","presupuestos","notas","reportes","historial-precios","actividad"];
 const SECCIONES_AVANZADO = ["inicio","venta","caja","gastos","productos","combos","proveedores","compras","clientes","presupuestos","notas","reportes","historial-precios","actividad","configuracion","soporte","backup"];
 
-let modoActual       = "avanzado";
+let modoActual        = "avanzado";
 let opcionalesActivos = [];
+
+function aplicarModo() {
+  let visibles = [];
+  if (modoActual === "basico")        visibles = [...SECCIONES_FIJAS];
+  else if (modoActual === "avanzado") visibles = [...SECCIONES_AVANZADO];
+  else {
+    visibles = SECCIONES_AVANZADO.filter(s =>
+      SECCIONES_FIJAS.includes(s) || opcionalesActivos.includes(s)
+    );
+  }
+
+  const nav = document.querySelector(".sidebar-nav");
+  if (!nav) return;
+
+  // Ocultar todos primero
+  nav.querySelectorAll("[data-view]").forEach(btn => btn.style.display = "none");
+
+  // Reordenar y mostrar en el orden exacto de visibles
+  visibles.forEach(view => {
+    const btn = nav.querySelector(`[data-view="${view}"]`);
+    if (btn) {
+      btn.style.display = "";
+      nav.appendChild(btn);
+    }
+  });
+}
 
 // Tabs de Configuración
 document.querySelectorAll(".cfg-tab").forEach(tab => {
