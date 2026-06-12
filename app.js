@@ -8388,12 +8388,25 @@ function aplicarModo() {
   let visibles = [];
   if (modoActual === "basico")        visibles = [...SECCIONES_FIJAS];
   else if (modoActual === "avanzado") visibles = [...SECCIONES_AVANZADO];
-  else visibles = [...SECCIONES_FIJAS, ...opcionalesActivos];
+  else {
+    // Personalizado: insertar opcionales activos en su posición del orden avanzado
+    visibles = SECCIONES_AVANZADO.filter(s =>
+      SECCIONES_FIJAS.includes(s) || opcionalesActivos.includes(s)
+    );
+  }
 
-  document.querySelectorAll(".nav-item[data-view]").forEach(btn => {
-    const view = btn.dataset.view;
-    // Las secciones fijas siempre visibles para admin
-    btn.style.display = visibles.includes(view) ? "" : "none";
+  const nav = document.querySelector(".sidebar-nav");
+  if (!nav) return;
+
+  // Reordenar físicamente los botones según el orden de visibles
+  visibles.forEach(view => {
+    const btn = nav.querySelector(`[data-view="${view}"]`);
+    if (btn) { btn.style.display = ""; nav.appendChild(btn); }
+  });
+
+  // Ocultar los que no están en visibles
+  nav.querySelectorAll("[data-view]").forEach(btn => {
+    if (!visibles.includes(btn.dataset.view)) btn.style.display = "none";
   });
 }
 
