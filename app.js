@@ -494,6 +494,7 @@ function initFirebase() {
     snap.forEach(d => { cajaData[d.id] = d.data(); });
     renderCaja();
     renderGastos();
+    updateCajaTopbar();
     updateCajaSidebar();
     renderInicio();
     renderNotifPanel();
@@ -7172,6 +7173,29 @@ document.getElementById("btnConfirmarVenta")?.addEventListener("click", async ()
   const el  = document.getElementById("modalVentaNro");
   if (el) el.textContent = fmtNroVenta(nro);
 }, true); // capture = true para que corra antes del listener principal
+
+// Botón Caja en topbar
+document.getElementById("btnCajaTopbar")?.addEventListener("click", () => {
+  document.querySelector('[data-view="caja"]')?.click();
+});
+
+function updateCajaTopbar() {
+  const badge = document.getElementById("cajaBadgeTopbar");
+  const total = document.getElementById("cajaTotalTopbar");
+  if (!badge || !total) return;
+  const hoy = cajaData[todayKey()];
+  const mañanaAbierta = hoy?.manana?.apertura && !hoy?.manana?.cierre;
+  const tardeAbierta  = hoy?.tarde?.apertura  && !hoy?.tarde?.cierre;
+  const turnoAbierto  = mañanaAbierta || tardeAbierta;
+  const turno = mañanaAbierta ? "manana" : "tarde";
+  badge.style.background = turnoAbierto ? "#22c55e" : "var(--text3)";
+  if (turnoAbierto && hoy?.[turno]?.ventas) {
+    const t = Object.values(hoy[turno].ventas).reduce((s, v) => s + (v.total||0), 0);
+    total.textContent = fmt(Math.round(t));
+  } else {
+    total.textContent = turnoAbierto ? fmt(0) : "—";
+  }
+}
 
 // ── Cotización del dólar — carga automática desde dolarapi.com ──
 const cotizInput = document.getElementById("cotizacionDolar");
