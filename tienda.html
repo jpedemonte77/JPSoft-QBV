@@ -1920,7 +1920,35 @@
 <!-- PDF -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script type="module" src="app.js"></script>
+<script>
+    (function() {
+      var ORDEN = ["inicio","venta","caja","gastos","productos","combos","proveedores","compras","clientes","presupuestos","notas","reportes","historial-precios","actividad","usuarios","soporte","backup"];
+      var FIJAS = ["inicio","venta","caja","productos","proveedores","clientes","usuarios","soporte","backup"];
+      try {
+        var saved = localStorage.getItem("jpsoft_modo");
+        if (!saved) return;
+        var d = JSON.parse(saved);
+        var modo = d.modo || "avanzado";
+        var opc  = d.opcionales || [];
+        var visibles;
+        if (modo === "basico") visibles = FIJAS;
+        else if (modo === "avanzado") visibles = ORDEN;
+        else visibles = ORDEN.filter(function(s) { return FIJAS.indexOf(s) >= 0 || opc.indexOf(s) >= 0; });
+        document.addEventListener("DOMContentLoaded", function() {
+          var nav = document.querySelector(".sidebar-nav");
+          if (!nav) return;
+          ORDEN.forEach(function(view) {
+            var btn = nav.querySelector('[data-view="' + view + '"]');
+            if (!btn) return;
+            var pos = visibles.indexOf(view);
+            if (pos >= 0) { btn.style.display = ""; btn.style.order = pos; }
+            else { btn.style.display = "none"; btn.style.order = ""; }
+          });
+        });
+      } catch(e) {}
+    })();
+  </script>
+  <script type="module" src="app.js"></script>
 
 <!-- ══════════════════════════════
      MODAL: NUEVO / EDITAR CLIENTE
