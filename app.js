@@ -281,11 +281,14 @@ function aplicarRol(rol) {
   const esAdmin = rolActual === "administrador";
   const vistasPermitidas = esAdmin ? VISTAS_ADMIN : VISTAS_EMPLEADO;
 
-  // Mostrar/ocultar ítems del sidebar
+  // Mostrar/ocultar ítems del sidebar según rol
   document.querySelectorAll(".nav-item[data-view]").forEach(btn => {
     const view = btn.dataset.view;
     btn.style.display = vistasPermitidas.includes(view) ? "" : "none";
   });
+
+  // Después aplicar el modo encima del rol
+  aplicarModo();
 
   // Si la vista activa no está permitida, ir a Inicio
   const vistaActiva = document.querySelector(".view.active")?.id?.replace("view-","");
