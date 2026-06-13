@@ -88,10 +88,11 @@ window.addEventListener("online", async () => {
   await checkConnection();
   if (estaOnline) {
     showToast("Conexión restablecida — sincronizando…", "success");
-    // Esperar un segundo para que Firestore sincronice y recargar datos
+    // Esperar 5 segundos para que Firestore sincronice las escrituras pendientes
     setTimeout(() => {
       initFirebase();
-    }, 2000);
+      showToast("Datos sincronizados ✓", "success");
+    }, 5000);
   }
 });
 window.addEventListener("offline", () => { setOnlineStatus(false); connectionCheckDone = true; });
