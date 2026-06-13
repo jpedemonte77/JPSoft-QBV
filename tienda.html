@@ -107,8 +107,8 @@
         Actividad
       </button>
       <button class="nav-item" data-view="usuarios">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="8" r="4"/><path d="M6 20v-2a6 6 0 0 1 12 0v2"/><circle cx="19" cy="19" r="3"/><path d="M19 16v1m0 4v1m-3-3h1m4 0h1"/></svg>
-        Usuarios
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Configuración
       </button>
       <button class="nav-item" data-view="soporte">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
@@ -1226,13 +1226,22 @@
          VISTA: USUARIOS
     ══════════════════════════════ -->
     <div class="view" id="view-usuarios">
-      <div class="view-header">
-        <div></div>
-        <button class="btn-primary" id="btnNuevoUsuario">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Nuevo usuario
-        </button>
+
+      <!-- Tabs Configuración -->
+      <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:20px">
+        <button class="cfg-tab" data-tab="usuarios" style="padding:10px 20px;font-size:14px;font-weight:500;background:none;border:none;border-bottom:2px solid var(--accent);color:var(--text1);cursor:pointer;font-family:inherit">Usuarios</button>
+        <button class="cfg-tab" data-tab="modos" style="padding:10px 20px;font-size:14px;background:none;border:none;border-bottom:2px solid transparent;color:var(--text2);cursor:pointer;font-family:inherit">Modos</button>
       </div>
+
+      <!-- Panel Usuarios -->
+      <div id="cfgPanelUsuarios">
+        <div class="view-header" style="padding:0;margin-bottom:1rem">
+          <div></div>
+          <button class="btn-primary" id="btnNuevoUsuario">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nuevo usuario
+          </button>
+        </div>
       <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
         <table>
           <colgroup>
@@ -1255,7 +1264,99 @@
         </table>
         <div class="empty-row" id="usuariosEmpty" style="display:none">No hay usuarios registrados.</div>
       </div>
-    </div>
+      </div><!-- fin cfgPanelUsuarios -->
+
+      <!-- Panel Modos -->
+      <div id="cfgPanelModos" style="display:none">
+        <div style="font-size:13px;font-weight:500;color:var(--text2);margin-bottom:12px">Modo de visualización</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px">
+
+          <div class="modo-card" data-modo="basico" style="border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div style="font-size:14px;font-weight:500;color:var(--text1)">Básico</div>
+              <div class="modo-radio" style="width:16px;height:16px;border-radius:50%;border:1px solid var(--border2)"></div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:#EEEDFE;color:#3C3489">Inicio</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:#EEEDFE;color:#3C3489">Venta</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:#EEEDFE;color:#3C3489">Caja</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:#EEEDFE;color:#3C3489">Productos</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:#EEEDFE;color:#3C3489">Proveedores</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:#EEEDFE;color:#3C3489">Clientes</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:#EEEDFE;color:#3C3489">Configuración</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:#EEEDFE;color:#3C3489">Soporte</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:#EEEDFE;color:#3C3489">Backup</span>
+            </div>
+          </div>
+
+          <div class="modo-card" data-modo="avanzado" style="border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div style="font-size:14px;font-weight:500;color:var(--text1)">Avanzado</div>
+              <div class="modo-radio" style="width:16px;height:16px;border-radius:50%;border:1px solid var(--border2)"></div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2)">Inicio</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2)">Venta</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2)">Caja</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2)">Gastos</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2)">Productos</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2)">Combos</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2)">Proveedores</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2)">Compras</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2)">Clientes</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2)">Presupuestos</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2)">Notas</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2)">Reportes</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2)">Historial</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2)">Actividad</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2)">Configuración</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2)">Soporte</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text2)">Backup</span>
+            </div>
+          </div>
+
+          <div class="modo-card" data-modo="personalizado" style="border:1px solid var(--border);border-radius:var(--radius);padding:14px;cursor:pointer">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div style="font-size:14px;font-weight:500;color:var(--text1)">Personalizado</div>
+              <div class="modo-radio" style="width:16px;height:16px;border-radius:50%;border:1px solid var(--border2)"></div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px">
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:#EEEDFE;color:#3C3489">Inicio</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:#EEEDFE;color:#3C3489">Venta</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:#EEEDFE;color:#3C3489">Caja</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:#EEEDFE;color:#3C3489">Productos</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:#EEEDFE;color:#3C3489">Proveedores</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:#EEEDFE;color:#3C3489">Clientes</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:#EEEDFE;color:#3C3489">Configuración</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:#EEEDFE;color:#3C3489">Soporte</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:#EEEDFE;color:#3C3489">Backup</span>
+              <span style="font-size:11px;padding:2px 7px;border-radius:20px;background:var(--surface2);color:var(--text3);border:1px dashed var(--border2)">+ opcionales</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Secciones opcionales -->
+        <div id="cfgOpcionalesWrap" style="border:1px solid var(--border);border-radius:var(--radius);padding:16px;opacity:0.4;pointer-events:none;transition:opacity .2s">
+          <div style="font-size:13px;font-weight:500;color:var(--text1);margin-bottom:12px">Secciones opcionales <span style="font-size:12px;font-weight:400;color:var(--text3)">(disponible en modo Personalizado)</span></div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px">
+            <div class="opc-item" data-sec="gastos" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--border)"><span style="font-size:13px;color:var(--text1)">Gastos</span><div class="opc-toggle" style="width:30px;height:17px;border-radius:20px;background:var(--surface2);border:1px solid var(--border2);position:relative;cursor:pointer"><div style="width:13px;height:13px;border-radius:50%;background:var(--text3);position:absolute;top:2px;left:2px;transition:all .15s"></div></div></div>
+            <div class="opc-item" data-sec="combos" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--border)"><span style="font-size:13px;color:var(--text1)">Combos</span><div class="opc-toggle" style="width:30px;height:17px;border-radius:20px;background:var(--surface2);border:1px solid var(--border2);position:relative;cursor:pointer"><div style="width:13px;height:13px;border-radius:50%;background:var(--text3);position:absolute;top:2px;left:2px;transition:all .15s"></div></div></div>
+            <div class="opc-item" data-sec="compras" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--border)"><span style="font-size:13px;color:var(--text1)">Compras</span><div class="opc-toggle" style="width:30px;height:17px;border-radius:20px;background:var(--surface2);border:1px solid var(--border2);position:relative;cursor:pointer"><div style="width:13px;height:13px;border-radius:50%;background:var(--text3);position:absolute;top:2px;left:2px;transition:all .15s"></div></div></div>
+            <div class="opc-item" data-sec="presupuestos" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--border)"><span style="font-size:13px;color:var(--text1)">Presupuestos</span><div class="opc-toggle" style="width:30px;height:17px;border-radius:20px;background:var(--surface2);border:1px solid var(--border2);position:relative;cursor:pointer"><div style="width:13px;height:13px;border-radius:50%;background:var(--text3);position:absolute;top:2px;left:2px;transition:all .15s"></div></div></div>
+            <div class="opc-item" data-sec="notas" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--border)"><span style="font-size:13px;color:var(--text1)">Notas</span><div class="opc-toggle" style="width:30px;height:17px;border-radius:20px;background:var(--surface2);border:1px solid var(--border2);position:relative;cursor:pointer"><div style="width:13px;height:13px;border-radius:50%;background:var(--text3);position:absolute;top:2px;left:2px;transition:all .15s"></div></div></div>
+            <div class="opc-item" data-sec="reportes" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--border)"><span style="font-size:13px;color:var(--text1)">Reportes</span><div class="opc-toggle" style="width:30px;height:17px;border-radius:20px;background:var(--surface2);border:1px solid var(--border2);position:relative;cursor:pointer"><div style="width:13px;height:13px;border-radius:50%;background:var(--text3);position:absolute;top:2px;left:2px;transition:all .15s"></div></div></div>
+            <div class="opc-item" data-sec="historial-precios" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--border)"><span style="font-size:13px;color:var(--text1)">Historial</span><div class="opc-toggle" style="width:30px;height:17px;border-radius:20px;background:var(--surface2);border:1px solid var(--border2);position:relative;cursor:pointer"><div style="width:13px;height:13px;border-radius:50%;background:var(--text3);position:absolute;top:2px;left:2px;transition:all .15s"></div></div></div>
+            <div class="opc-item" data-sec="actividad" style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;border-radius:var(--radius-sm);border:1px solid var(--border)"><span style="font-size:13px;color:var(--text1)">Actividad</span><div class="opc-toggle" style="width:30px;height:17px;border-radius:20px;background:var(--surface2);border:1px solid var(--border2);position:relative;cursor:pointer"><div style="width:13px;height:13px;border-radius:50%;background:var(--text3);position:absolute;top:2px;left:2px;transition:all .15s"></div></div></div>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;display:flex;justify-content:flex-end">
+          <button class="btn-primary" id="btnGuardarModo">Guardar cambios</button>
+        </div>
+      </div><!-- fin cfgPanelModos -->
+
+    </div><!-- fin view-usuarios/configuracion -->
 
     <!-- ══════════════════════════════
          VISTA: SOPORTE
