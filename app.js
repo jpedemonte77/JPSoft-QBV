@@ -5,9 +5,10 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-  getFirestore, doc, collection, setDoc, addDoc, getDoc, getDocs,
+  initializeFirestore, persistentLocalCache, persistentMultipleTabManager,
+  doc, collection, setDoc, addDoc, getDoc, getDocs,
   onSnapshot, deleteDoc, updateDoc, deleteField, query, orderBy, limit,
-  writeBatch, enableIndexedDbPersistence
+  writeBatch
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import {
   getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword
@@ -26,17 +27,10 @@ const firebaseConfig = {
 };
 
 const app  = initializeApp(firebaseConfig);
-const db   = getFirestore(app);
-const auth = getAuth(app);
-
-// ── Persistencia offline ──
-enableIndexedDbPersistence(db).catch(err => {
-  if (err.code === "failed-precondition") {
-    console.warn("Offline: múltiples pestañas abiertas.");
-  } else if (err.code === "unimplemented") {
-    console.warn("Offline: navegador no soportado.");
-  }
+const db   = initializeFirestore(app, {
+  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
 });
+const auth = getAuth(app);
 
 
 
