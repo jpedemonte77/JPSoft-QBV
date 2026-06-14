@@ -5397,12 +5397,12 @@ document.getElementById("btnConfirmarCliente")?.addEventListener("click", async 
   const datos = { nombre, telefono: tel, email, razonSocial, iva, cuit, dni, domicilio, localidad };
 
   if (id) {
-    await updateDoc(doc(db, "clientes", id), datos);
+    updateDoc(doc(db, "clientes", id), datos);
     registrarLog("cliente", `Cliente editado — ${nombre}`);
     showToast("Cliente actualizado ✓", "success");
   } else {
     const nuevoRef = doc(collection(db, "clientes"));
-    await setDoc(nuevoRef, { ...datos, saldo: 0, creado: Date.now(), ultimoMov: Date.now() });
+    setDoc(nuevoRef, { ...datos, saldo: 0, creado: Date.now(), ultimoMov: Date.now() });
     registrarLog("cliente", `Cliente creado — ${nombre}`);
     showToast(`Cliente creado ✓ — ${nombre}`, "success");
 
@@ -5412,7 +5412,6 @@ document.getElementById("btnConfirmarCliente")?.addEventListener("click", async 
       setTimeout(() => {
         const sel = document.getElementById("ventaClienteSelect");
         if (sel) {
-          // Repopular y seleccionar
           sel.innerHTML = '<option value="">Sin cliente…</option>';
           Object.entries(clientesData).sort((a,b) => (a[1].nombre||"").localeCompare(b[1].nombre||"")).forEach(([id, c]) => {
             const opt = document.createElement("option");
@@ -5471,8 +5470,8 @@ document.getElementById("btnConfirmarCobrar")?.addEventListener("click", async (
 
   // Guardar movimiento
   const movRef = doc(collection(db, "clientes", clienteActivoId, "movimientos"));
-  await setDoc(movRef, { tipo: "pago", monto: Math.round(monto), concepto: "Pago", fecha: Date.now(), admin: getNombreUsuario() });
-  await updateDoc(doc(db, "clientes", clienteActivoId), { saldo: nuevoSaldo, ultimoMov: Date.now() });
+  setDoc(movRef, { tipo: "pago", monto: Math.round(monto), concepto: "Pago", fecha: Date.now(), admin: getNombreUsuario() });
+  updateDoc(doc(db, "clientes", clienteActivoId), { saldo: nuevoSaldo, ultimoMov: Date.now() });
 
   registrarLog("cliente", `Pago registrado — ${fmt(Math.round(monto))} · ${c?.nombre}`);
   showToast(`Pago registrado ✓ — ${fmt(Math.round(monto))}`, "success");
@@ -5704,7 +5703,7 @@ document.getElementById("gastosTableBody")?.addEventListener("click", async e =>
     const desc  = btnAnular.dataset.desc;
     const monto = btnAnular.dataset.monto;
     if (!confirm(`¿Anular este gasto?\n${desc}\nMonto: ${fmt(Number(monto))}\n\nEsta acción no se puede deshacer.`)) return;
-    await updateDoc(doc(db, "caja", fecha), {
+    updateDoc(doc(db, "caja", fecha), {
       [`gastos.${id}`]: deleteField()
     });
     registrarLog("gasto", `Gasto anulado — ${fmt(Number(monto))} · ${desc}`);
@@ -6327,10 +6326,10 @@ document.getElementById("btnConfirmarNota")?.addEventListener("click", async () 
   const id    = document.getElementById("notaEditId").value;
 
   if (id) {
-    await updateDoc(doc(db, "notas", id), { texto, fecha });
+    updateDoc(doc(db, "notas", id), { texto, fecha });
     showToast("Nota actualizada ✓", "success");
   } else {
-    await setDoc(doc(collection(db, "notas")), {
+    setDoc(doc(collection(db, "notas")), {
       texto, fecha, completada: false,
       ts: new Date().toISOString(), admin: getNombreUsuario()
     });
@@ -6349,7 +6348,7 @@ document.getElementById("notasGrid")?.addEventListener("click", async e => {
 
   if (btnDel) {
     if (!confirm("¿Eliminar esta nota?")) return;
-    await deleteDoc(doc(db, "notas", btnDel.dataset.notaDel));
+    deleteDoc(doc(db, "notas", btnDel.dataset.notaDel));
     showToast("Nota eliminada ✓", "success");
     return;
   }
@@ -6357,7 +6356,7 @@ document.getElementById("notasGrid")?.addEventListener("click", async e => {
   if (btnToggle) {
     const n = notasData.find(x => x._id === btnToggle.dataset.notaToggle);
     if (!n) return;
-    await updateDoc(doc(db, "notas", n._id), { completada: !n.completada });
+    updateDoc(doc(db, "notas", n._id), { completada: !n.completada });
   }
 });
 
